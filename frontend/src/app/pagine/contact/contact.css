@@ -1,0 +1,91 @@
+/* Grid 2x2 per i rettangoli della pagina contatti */
+
+.contact-cards-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(280px, 1fr));
+	gap: 2.5rem;
+	margin: 7rem auto 4.5rem auto;
+	max-width: 900px;
+}
+
+.contact-card {
+	background: #fff;
+	border: 2.5px solid #000000;
+	border-radius: 1.2rem;
+	box-shadow: 0 8px 24px rgba(25, 118, 210, 0.12), 0 1.5px 4px rgba(0,0,0,0.10);
+	padding: 2.2rem 2rem 1.5rem 2rem;
+	min-width: 220px;
+	max-width: 420px;
+	min-height: 270px;
+	height: 80%;
+	transition: transform 0.18s, box-shadow 0.18s;
+	transform-style: preserve-3d;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	font-family: 'Segoe UI', 'Arial', sans-serif;
+	position: relative;
+}
+.contact-card:hover {
+	transform: scale(1.03) rotateY(2deg) rotateX(2deg);
+	box-shadow: 0 16px 32px rgba(25, 118, 210, 0.18), 0 3px 8px rgba(0,0,0,0.14);
+	border-color: #00060c;
+}
+.contact-card h2 {
+	margin-top: 0.5rem;
+	color: #000000;
+	font-size: 1.5rem;
+	font-weight: 700;
+	text-shadow: 1px 1px 2px #e3eafc, 0 1px 0 #ccc;
+	display: flex;
+	align-items: center;
+}
+.contact-card p {
+	color: #333;
+	font-size: 1.08rem;
+	margin-bottom: 0;
+	margin-top: 0.7rem;
+	line-height: 1.6;
+}
+.contact-icon {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	margin-bottom: 0.5rem;
+}
+.contact-icon svg {
+	width: 2.2rem;
+	height: 2.2rem;
+	margin-right: 0.5rem;
+	vertical-align: middle;
+}
+@media (max-width: 700px) {
+	.contact-cards-grid {
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+		max-width: 98vw;
+	}
+	.contact-card {
+		max-width: 98vw;
+		padding: 1.5rem 1rem;
+	}
+}
+/* Stili 3D per i riquadri della pagina contatti */
+.contact-cards-grid {
+	margin-top: 0;
+	color: #1976d2;
+	font-size: 1.3rem;
+	text-shadow: 1px 1px 2px #fff, 0 1px 0 #ccc;
+}
+.contact-card p {
+	color: #000000;
+	font-size: 1.3rem;
+	text-shadow: 1px 1px 2px #fff, 0 1px 0 #ccc;
+	position: relative;
+}
+.contact-card {
+	color: #333;
+	font-size: 1rem;
+}
+
+

@@ -1,0 +1,97 @@
+.search-btn-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.search-btn {
+  width: 100%;
+  padding: 1rem 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(180deg, #ff2a2a 0%, #b80000 100%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25), 0 2px 0 #fff inset;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  transform: perspective(400px) translateZ(0) scale(1.04) rotateX(8deg);
+}
+.search-btn:hover {
+  background: linear-gradient(180deg, #b80000 0%, #ff2a2a 100%);
+  transform: translateY(-4px) scale(1.08) rotateX(0deg);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.32), 0 2px 0 #fff inset;
+}
+.input-row {
+  display: flex;
+  gap: 2rem;
+  width: 80%;
+  margin: 2rem auto;
+  justify-content: center;
+  margin-top: 20px;
+}
+.input-row input {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1rem;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+p {
+  text-align: center;
+  font-weight: bold;
+  font-size: 3rem;
+  margin-top: -2rem;
+  color: #000000;
+}
+h1, h2, h3 {
+  font-size: 4rem;
+  margin-top: 32px;
+  font-weight: bold;
+  color: #111;
+  animation: oscillazione 2s infinite ease-in-out;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.25), 0 1px 0 #fff, 0 2px 0 #ccc;
+  text-align: center;
+
+}
+
+@keyframes oscillazione {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+ 100% { transform: translateY(0); }
+}
+
+h2{
+  font-weight: bold;
+  color: #fe0000;
+}
+h1,h3 {
+  font-weight: bold;
+  color: #111;
+}
+.titoli-riga {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+:host {
+  display: block;
+  width: 100%;          
+  min-height: 500px;     
+  margin: 2rem auto;      
+  margin-top: -40px;      
+  background-image: url('../../assets/image.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-position 0.1s;
+}

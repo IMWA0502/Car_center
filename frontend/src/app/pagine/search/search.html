@@ -1,0 +1,39 @@
+<app-header></app-header>
+
+<div class="search-container">
+	<button (click)="cercaVeicoli()">Cerca</button>
+	<div *ngIf="loading">Caricamento...</div>
+	<div *ngIf="error" class="error">{{ error }}</div>
+	<div *ngIf="vehicles.length > 0">
+		<h2>Veicoli trovati:</h2>
+		<ul>
+			<li *ngFor="let v of vehicles">
+				<strong>{{ v.make }} {{ v.model }}</strong> - Targa: {{ v.registration }}<br>
+				<span *ngIf="v.colour">Colore: {{ v.colour }}</span>
+				<span *ngIf="v.year">Anno: {{ v.year }}</span>
+				<span *ngIf="v.ownershipCondition">Condizione: {{ v.ownershipCondition }}</span>
+				<br>
+				<span *ngIf="v.bodyType">Tipo: {{ v.bodyType }}</span>
+				<span *ngIf="v.fuelType">Carburante: {{ v.fuelType }}</span>
+				<span *ngIf="v.transmissionType">Cambio: {{ v.transmissionType }}</span>
+				<br>
+				<span *ngIf="v.doors">Porte: {{ v.doors }}</span>
+				<span *ngIf="v.seats">Posti: {{ v.seats }}</span>
+				<br>
+				<span *ngIf="v.topSpeedMPH">Velocità max: {{ v.topSpeedMPH }} mph</span>
+				<br>
+				<span *ngIf="v.firstRegistrationDate">Immatricolazione: {{ v.firstRegistrationDate }}</span>
+				<br>
+				<details>
+					<summary>Dettagli JSON</summary>
+					<pre>{{ v | json }}</pre>
+				</details>
+			</li>
+		</ul>
+	</div>
+	<div *ngIf="!loading && vehicles.length === 0 && !error">
+		Nessun veicolo trovato.
+	</div>
+</div>
+
+<app-footer></app-footer>

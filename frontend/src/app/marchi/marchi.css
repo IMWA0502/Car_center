@@ -1,0 +1,32 @@
+.marchi-slider {
+	width: 100%;
+	overflow: hidden;
+	height: 80px;
+	position: relative;
+}
+
+.marchi-track {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	width: max-content;
+	animation: marchi-scroll 30s linear infinite;
+}
+
+.marchi-track img {
+	width: 2cm;
+	height: auto;
+	object-fit: contain;
+	display: inline-block;
+}
+
+@keyframes marchi-scroll {
+	0% { transform: translateX(0); }
+	100% { transform: translateX(-50%); }
+}
+.marchi-track img {
+	width: 2cm;
+	height: auto;
+	object-fit: contain;
+	display: inline-block;
+}

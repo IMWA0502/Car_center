@@ -1,0 +1,104 @@
+
+<app-header></app-header>
+<div>
+    <h1>Part Exchange</h1>
+    <p class="paragrafo1">If you already have a vehicle you may consider opting for a part exchange. A part exchange allows you  to put the value of your old vehicle towards the cost of your new <br>
+         one and if you’re thinking of purchasing your next vehicle on finance, a part exchange could cover your deposit and even reduce your monthly payments.</p>
+         <hr>
+</div>
+
+<div class="part-exchange-form">
+  <div class="step-indicator">
+    <div class="step" [class.active]="activeStep === 1">
+      <span>1</span>
+      <hr>
+      <div class="step-label" [class.active-label]="activeStep === 1">vehicle info</div>
+    </div>
+    <div class="step" [class.active]="activeStep === 2">
+      <span>2</span>
+      <hr>
+      <div class="step-label" [class.active-label]="activeStep === 2">vehicle condition</div>
+    </div>
+    <div class="step" [class.active]="activeStep === 3">
+      <span>3</span>
+      <div class="step-label" [class.active-label]="activeStep === 3">contact details</div>
+    </div>
+  </div>
+
+  <!-- Step 1: Vehicle Info -->
+  <form *ngIf="activeStep === 1" (ngSubmit)="nextStep()">
+    <label>Vehicle Type</label>
+    <select>
+      <option>Car</option>
+      <option>Motorcycle</option>
+      <option>Van</option>
+    </select>
+
+    <label>Make: *</label>
+    <input type="text" placeholder="vehicle make" required>
+
+    <label>Model: *</label>
+    <input type="text" placeholder="vehicle model" required>
+
+    <label>Vehicle Registration: *</label>
+    <input type="text" placeholder="registration number" required>
+
+    <label>Mileage: *</label>
+    <input type="text" placeholder="vehicle mileage" required>
+
+    <label>Service history</label>
+    <div class="service-history">
+      <label><input type="radio" name="service" value="full"> Full service history</label>
+      <label><input type="radio" name="service" value="partial"> Partial service history</label>
+      <label><input type="radio" name="service" value="first"> First service not due</label>
+      <label><input type="radio" name="service" value="none"> No service history</label>
+    </div>
+
+    <label>Did your vehicle come with any optional extras? If so, please specify</label>
+    <textarea rows="2"></textarea>
+
+    <button type="submit" class="next-btn">next: vehicle info</button>
+  </form>
+
+  <!-- Step 2: Vehicle Condition -->
+  <form *ngIf="activeStep === 2" (ngSubmit)="nextStep()">
+    <label>Is the vehicle accident free?</label>
+    <select>
+      <option>Yes</option>
+      <option>No</option>
+    </select>
+
+    <label>Exterior condition</label>
+    <input type="text" placeholder="Describe exterior condition">
+
+    <label>Interior condition</label>
+    <input type="text" placeholder="Describe interior condition">
+
+    <label>Any mechanical issues?</label>
+    <input type="text" placeholder="Describe mechanical issues">
+
+    <div style="display:flex; gap:12px;">
+      <button type="button" class="next-btn" (click)="prevStep()">Back</button>
+      <button type="submit" class="next-btn">next: vehicle condition</button>
+    </div>
+  </form>
+
+  <!-- Step 3: Contact Details -->
+  <form *ngIf="activeStep === 3">
+    <label>Name</label>
+    <input type="text" placeholder="Your name" required>
+
+    <label>Email</label>
+    <input type="email" placeholder="Your email" required>
+
+    <label>Phone</label>
+    <input type="tel" placeholder="Your phone number" required>
+
+    <div style="display:flex; gap:12px;">
+      <button type="button" class="next-btn" (click)="prevStep()">Back</button>
+      <button type="button" class="next-btn" disabled>Finish</button>
+    </div>
+  </form>
+</div>
+
+<app-footer></app-footer>

@@ -1,9 +1,61 @@
-<div>
+<div class="filter-box">
     <h1>Filter</h1>
     <div>
+        <p>Make</p>
+    <select id="make" [(ngModel)]="selectedmake" class="model-select">
+            <option *ngFor="let make of makes" [value]="make">{{ make }}</option>
+        </select>
+    </div>
+
+    <div>
         <p>Model</p>
-        <select id="model" [(ngModel)]="selectedModel" style="width: 200px; height: 40px; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px;">
+        <select id="model" [(ngModel)]="selectedmodel" class="model-select">
             <option *ngFor="let model of models" [value]="model">{{ model }}</option>
         </select>
     </div>
+
+    <div>
+        <h2>Body Type</h2>
+        <div *ngFor="let type of bodyTypes">
+            <label>
+                <input type="checkbox" [(ngModel)]="type.selected" />
+                {{ type.name }} <span style="color: #888;">({{ type.count }})</span>
+            </label>
+        </div>
+    </div>
+    <div>
+    <h2>Price</h2>
+    <input type="range" min="690" max="9690" [(ngModel)]="price" class="slider" />
+        <div style="color: #888;">£{{ price }}</div>
+
+    <h2>Year of Issue</h2>
+    <input type="range" min="2008" max="2019" [(ngModel)]="year" class="slider" />
+        <div style="color: #888;">{{ year }}</div>
+
+    <h2>Mileage</h2>
+    <input type="range" min="36000" max="196000" [(ngModel)]="mileage" class="slider" />
+        <div style="color: #888;">{{ mileage | number }} km</div>
+
+    <h2>Engine Capacity</h2>
+    <input type="range" min="1" max="3" step="0.1" [(ngModel)]="engineCapacity" class="slider" />
+        <div style="color: #888;">{{ engineCapacity }}L</div>
+    
+            <div>
+                <h2>Engine Type</h2>
+                <div *ngFor="let engine of engineTypes">
+                    <label>
+                        <input type="checkbox" [(ngModel)]="engine.selected" />
+                        {{ engine.name }} <span style="color: #888;">({{ engine.count }})</span>
+                    </label>
+                </div>
+    
+                <h2>Drivetrain</h2>
+                <div *ngFor="let drive of drivetrains">
+                    <label>
+                        <input type="checkbox" [(ngModel)]="drive.selected" />
+                        {{ drive.name }} <span style="color: #888;">({{ drive.count }})</span>
+                    </label>
+                </div>
+            </div>
+</div>                
 </div>

@@ -1,12 +1,17 @@
 <app-header></app-header>
-<div>
-  <h1>Used Cars</h1>
-  <div *ngFor="let item of autotraderData">
-    <div *ngIf="item.vehicle">
-      <strong>{{ item.vehicle.make }} {{ item.vehicle.model }}</strong>
-      <span> - {{ item.vehicle.registration }}</span>
+<div class="used-page-layout">
+  <div class="used-filter">
+    <app-filter></app-filter>
+  </div>
+  <div class="used-content">
+    <h1>Used Cars</h1>
+    <div *ngFor="let item of autotraderData">
+      <div *ngIf="item.vehicle">
+        <strong>{{ item.vehicle.make }} {{ item.vehicle.model }}</strong>
+        <span> - {{ item.vehicle.registration }}</span>
+      </div>
+      <pre>{{ item | json }}</pre>
     </div>
-    <pre>{{ item | json }}</pre>
   </div>
 </div>
 <app-footer></app-footer>

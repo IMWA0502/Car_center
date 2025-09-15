@@ -1,0 +1,9 @@
+<div>
+    <h1>Filter</h1>
+    <div>
+        <p>Model</p>
+        <select id="model" [(ngModel)]="selectedModel" style="width: 200px; height: 40px; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px;">
+            <option *ngFor="let model of models" [value]="model">{{ model }}</option>
+        </select>
+    </div>
+</div>

@@ -62,36 +62,49 @@
 
 .header-btn-group {
 		display: flex;
-		gap: 1rem;
+		gap: 3rem; /* piu' spazio tra le voci */
+		align-items: center;
 		margin-right: 1rem;
 }
 
 .header-btn {
-	padding: 0.7rem 1.6rem;
-	background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
-	color: #232526;
+	/* stile testuale come nello screenshot */
+	padding: 0;
+	background: transparent;
+	color: #0b0b0b;
 	border: none;
-	border-radius: 8px;
-	font-size: 1.1rem;
-	font-weight: 600;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1.5px 0 #fff inset;
-	transform: translateZ(0) scale(1) rotateX(8deg);
-	transition: transform 0.2s, box-shadow 0.2s;
+	border-radius: 0;
+	font-size: 1.15rem;
+	font-weight: 800;
+	letter-spacing: .5px;
+	text-transform: uppercase;
+	box-shadow: none;
+	transform: none;
+	transition: color .15s ease-in-out;
 	cursor: pointer;
 }
 
 .header-btn:hover {
-	background: linear-gradient(180deg, #e0e0e0 0%, #fff 100%);
-	transform: translateY(-4px) scale(1.08) rotateX(0deg);
-	box-shadow: 0 6px 18px rgba(0,0,0,0.25), 0 1.5px 0 #fff inset;
+	color: #000;
+	background: transparent;
+	box-shadow: none;
 }
 
 
 
 
-.header-btn:hover {
-	background: #e0e0e0;
+/* caret ▼ sulle voci rilevanti:
+   4 = SELL YOUR CAR, 5 = REVIEWS/Complaints, e il bottone della dropdown */
+.header-btn-group .header-btn:nth-child(4)::after,
+.header-btn-group .header-btn:nth-child(5)::after,
+.dropdown > .dropdown-toggle::after {
+	content: '\25BE';
+	margin-left: .5rem;
+	font-size: .9rem;
 }
+
+/* assicura che i link-ancora con classe header-btn non abbiano sottolineatura */
+.header-btn-group a.header-btn { text-decoration: none; color: inherit; }
 
 
 .logo-btn {

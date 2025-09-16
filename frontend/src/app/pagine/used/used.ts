@@ -4,13 +4,14 @@ import { Footer } from '../../footer/footer';
 import { io, Socket } from 'socket.io-client';
 import { CommonModule } from '@angular/common';
 import { JsonPipe } from '@angular/common';
+import { Filter } from '../../filter/filter';
 
 @Component({
   selector: 'app-used',
   standalone: true,
   templateUrl: './used.html',
   styleUrl: './used.css',
-  imports: [Header, Footer, CommonModule, JsonPipe]
+  imports: [Header, Footer, CommonModule, JsonPipe, Filter]
 })
 
 export class UsedComponent implements OnInit, OnDestroy {

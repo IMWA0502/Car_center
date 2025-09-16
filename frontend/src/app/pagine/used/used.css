@@ -4,3 +4,17 @@ h1 {
 div {
   padding: 2rem;
 }
+
+.used-page-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.used-filter {
+  flex: 0 0 340px;
+}
+
+.used-content {
+  flex: 1;
+}

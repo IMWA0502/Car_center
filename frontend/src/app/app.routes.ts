@@ -7,6 +7,7 @@ import { ReviewsComponent } from './pagine/reviews/reviews';
 import { SellComponent } from './pagine/sell/sell';
 import { SearchComponent } from './pagine/search/search';
 import { SplashComponent } from './splash/splash';
+import { PartExchangeComponent } from './pagine/part_exchange/part_exchange';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'splash', pathMatch: 'full' },
@@ -17,5 +18,6 @@ export const routes: Routes = [
   { path: 'condition', component: ConditionComponent },
   { path: 'reviews', component: ReviewsComponent },
   { path: 'sell', component: SellComponent },
-  { path: 'search', component: SearchComponent }
+  { path: 'search', component: SearchComponent },
+  { path: 'part_exchange', component: PartExchangeComponent }
 ];

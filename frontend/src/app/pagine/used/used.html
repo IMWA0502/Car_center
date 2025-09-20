@@ -5,12 +5,21 @@
   </div>
   <div class="used-content">
     <h1>Used Cars</h1>
-    <div *ngFor="let item of autotraderData">
-      <div *ngIf="item.vehicle">
-        <strong>{{ item.vehicle.make }} {{ item.vehicle.model }}</strong>
-        <span> - {{ item.vehicle.registration }}</span>
+    <div class="vehicle-grid">
+      <div class="vehicle-card" *ngFor="let v of vehicles">
+        <div class="vehicle-image">
+          <img [src]="v.imageUrl || '/assets/image.png'" alt="{{ v.title }}" />
+        </div>
+        <div class="vehicle-body">
+          <h3 class="vehicle-title">{{ v.title }}</h3>
+          <div class="vehicle-subtitle" *ngIf="v.subtitle">{{ v.subtitle }}</div>
+          <div class="vehicle-meta">
+            <span *ngIf="v.fuel">{{ v.fuel }}</span>
+            <span *ngIf="v.mileage">{{ v.mileage | number }} km</span>
+          </div>
+        </div>
+        <div class="vehicle-price" *ngIf="v.price">£ {{ v.price | number:'1.0-0' }}</div>
       </div>
-      <pre>{{ item | json }}</pre>
     </div>
   </div>
 </div>

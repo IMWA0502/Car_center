@@ -8,6 +8,7 @@ import { SellComponent } from './pagine/sell/sell';
 import { SearchComponent } from './pagine/search/search';
 import { SplashComponent } from './splash/splash';
 import { PartExchangeComponent } from './pagine/part_exchange/part_exchange';
+import { Car } from './pagine/car/car';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'splash', pathMatch: 'full' },
@@ -20,4 +21,5 @@ export const routes: Routes = [
   { path: 'sell', component: SellComponent },
   { path: 'search', component: SearchComponent },
   { path: 'part_exchange', component: PartExchangeComponent }
+  ,{ path: 'car/:id', component: Car }
 ];

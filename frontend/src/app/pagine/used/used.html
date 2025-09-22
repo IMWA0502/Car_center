@@ -5,8 +5,16 @@
   </div>
   <div class="used-content">
     <h1>Used Cars</h1>
-    <div class="vehicle-grid">
-      <div class="vehicle-card" *ngFor="let v of vehicles">
+    <div *ngIf="errorBanner" class="alert-banner" role="alert">
+      <div class="alert-title">{{ errorBanner.title }}</div>
+      <div class="alert-detail" *ngIf="errorBanner.detail">{{ errorBanner.detail }}</div>
+    </div>
+    <div class="vehicle-grid" *ngIf="!errorBanner">
+    <a class="vehicle-card" *ngFor="let v of vehicles"
+      [routerLink]="['/car', v.id]"
+      [queryParams]="{ title: v.title }"
+      [state]="{ vehicle: v }"
+      role="button">
         <div class="vehicle-image">
           <img [src]="v.imageUrl || '/assets/image.png'" alt="{{ v.title }}" />
         </div>
@@ -19,7 +27,7 @@
           </div>
         </div>
         <div class="vehicle-price" *ngIf="v.price">£ {{ v.price | number:'1.0-0' }}</div>
-      </div>
+      </a>
     </div>
   </div>
 </div>

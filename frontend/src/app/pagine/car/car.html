@@ -1,0 +1,27 @@
+<div class="car-page">
+	<h1>Vehicle details</h1>
+	<div class="car-hero" *ngIf="title || id">
+		<h2>{{ title || 'Car' }}</h2>
+		<div class="muted">ID: {{ id }}</div>
+	</div>
+
+	<div *ngIf="vehicle as v; else noVehicle">
+		<div class="car-summary">
+			<img *ngIf="v.imageUrl" [src]="v.imageUrl" [alt]="v.title" />
+			<div>
+				<div class="title">{{ v.title }}</div>
+				<div class="subtitle" *ngIf="v.subtitle">{{ v.subtitle }}</div>
+				<div class="meta">
+					<span *ngIf="v.fuel">{{ v.fuel }}</span>
+					<span *ngIf="v.mileage">{{ v.mileage | number }} km</span>
+					<span *ngIf="v.price">£ {{ v.price | number:'1.0-0' }}</span>
+				</div>
+			</div>
+		</div>
+		<h3>Raw data</h3>
+		<pre>{{ v.raw || v | json }}</pre>
+	</div>
+	<ng-template #noVehicle>
+		<p>Nessun dato veicolo passato. Torna alla pagina Used e riprova.</p>
+	</ng-template>
+</div>

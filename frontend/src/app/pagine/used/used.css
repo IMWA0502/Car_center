@@ -17,6 +17,22 @@
   color: #0f172a;
 }
 
+.alert-banner {
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.alert-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.alert-detail {
+  font-size: 0.95rem;
+}
+
 .vehicle-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

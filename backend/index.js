@@ -12,8 +12,13 @@ import cors from 'cors';
 
 // Crea un'applicazione Express per gestire le API
 const app = express();
-// Applica il middleware CORS per permettere richieste da altri domini
-app.use(cors());
+// Applica il middleware CORS per permettere richieste da altri domini ed esporre header custom
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['x-autotrader-sandbox-id']
+}));
 // Imposta la porta su cui il server ascolterà (di default 3000)
 const PORT = process.env.PORT || 3000;
 // Crea il server HTTP utilizzando l'app Express
@@ -40,21 +45,6 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
 // Nuova rotta: ottieni tutte le auto dal sandbox Autotrader
 app.get('/api/vehicles', async (req, res) => {
   try {
-    // Modalità mock per lavorare senza dipendere dall'API esterna
-    if (String(process.env.MOCK_AUTOTRADER).toLowerCase() === 'true') {
-      const sandboxId = process.env.AUTOTRADER_SANDBOX_ID || 'MOCK_ID';
-      res.setHeader('x-autotrader-sandbox-id', sandboxId);
-      return res.json({
-        sandboxId,
-        source: 'mock',
-        mocked: true,
-        vehicles: [
-          { id: 'sample-1', make: 'Audi', model: 'A3', year: 2018, price: 12990, mileage: 52000, fuel: 'Petrol' },
-          { id: 'sample-2', make: 'BMW', model: '3 Series', year: 2017, price: 13950, mileage: 61000, fuel: 'Diesel' },
-          { id: 'sample-3', make: 'Ford', model: 'Focus', year: 2016, price: 7450, mileage: 78000, fuel: 'Petrol' }
-        ]
-      });
-    }
 
     // --- CONFIGURAZIONE CREDENZIALI API AUTOTRADER ---
     // Queste variabili sono fornite da Autotrader per accedere al sandbox (obbligatorie)
@@ -96,39 +86,7 @@ app.get('/api/vehicles', async (req, res) => {
     }
 
     // --- CHIAMATA DATI: RICHIESTA AI VEICOLI ---
-    // Discovery opzionale: prova a ricavare un forecourtId dall'advertiserId (se disponibile)
-    let discoveredForecourtId = null;
-    if (sandboxId) {
-      try {
-        const forecourtListUrl = `https://api-sandbox.autotrader.co.uk/forecourts?advertiser_id=${encodeURIComponent(sandboxId)}&page=1&page_size=1`;
-        const foreResp = await fetchWithTimeout(forecourtListUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-        if (foreResp.ok) {
-          const foreData = await foreResp.json();
-          // Tenta varie forme comuni: {items:[{id}]}, {forecourts:[{id}]}, array diretto
-          const candidates = Array.isArray(foreData)
-            ? foreData
-            : Array.isArray(foreData?.items)
-              ? foreData.items
-              : Array.isArray(foreData?.forecourts)
-                ? foreData.forecourts
-                : [];
-          if (candidates.length && candidates[0]?.id) {
-            discoveredForecourtId = String(candidates[0].id);
-            console.log('ForecourtId scoperto:', discoveredForecourtId);
-          }
-        } else {
-          const preview = (await foreResp.text()).slice(0, 200);
-          console.warn('Discovery forecourts fallita:', forecourtListUrl, '->', foreResp.status, foreResp.statusText, '| Body:', preview);
-        }
-      } catch (e) {
-        console.warn('Discovery forecourts errore:', e);
-      }
-    }
+    // Nota: rimosso il tentativo di discovery dei forecourts e gli endpoint non documentati.
     // Prova una lista estesa di endpoint (configurabile via env) perché non tutti gli account sandbox
     // hanno permessi sugli stessi percorsi. Varianti: advertiser_id vs advertiserId, /search, /forecourts stock.
     const templateFromEnv = process.env.AUTOTRADER_VEHICLES_ENDPOINT || '';
@@ -144,21 +102,12 @@ app.get('/api/vehicles', async (req, res) => {
       return `${url}${sep}page=1&page_size=${encodeURIComponent(pageSize)}`;
     };
 
-    // Costruisci una lista di URL-candidati da provare in ordine
+    // Costruisci una lista di URL-candidati da provare in ordine (solo endpoint documentati)
     const baseCandidates = [
+      // Tentativo diretto senza parametri, come richiesto
+      'https://api-sandbox.autotrader.co.uk/vehicles',
       'https://api-sandbox.autotrader.co.uk/vehicles?advertiser_id={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/vehicles?advertiserId={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/vehicles/search?advertiser_id={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/vehicles/search?advertiserId={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/adverts?advertiser_id={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/adverts?advertiserId={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/adverts/search?advertiser_id={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/adverts/search?advertiserId={advertiserId}',
-      // Endpoints basati su forecourtId se disponibile (fallback al sandboxId per compatibilità)
-      'https://api-sandbox.autotrader.co.uk/forecourts/{forecourtId}/stock',
-      'https://api-sandbox.autotrader.co.uk/forecourts/{forecourtId}/adverts',
-      'https://api-sandbox.autotrader.co.uk/forecourts/{advertiserId}/stock',
-      'https://api-sandbox.autotrader.co.uk/forecourts/{advertiserId}/adverts'
+      'https://api-sandbox.autotrader.co.uk/vehicles?advertiserId={advertiserId}'
     ];
 
     const tryTemplates = [
@@ -171,8 +120,7 @@ app.get('/api/vehicles', async (req, res) => {
     for (const tpl of tryTemplates) {
       // Rimpiazza placeholder id e aggiungi paginazione dove ha senso
       let url = tpl
-        .replace('{advertiserId}', encodeURIComponent(sandboxId || ''))
-        .replace('{forecourtId}', encodeURIComponent(discoveredForecourtId || sandboxId || ''));
+        .replace('{advertiserId}', encodeURIComponent(sandboxId || ''));
       if (!/\/forecourts\//i.test(url)) {
         url = withPaging(url);
       }
@@ -199,6 +147,22 @@ app.get('/api/vehicles', async (req, res) => {
     }
 
     if (!success) {
+      // Se tutti o parte dei tentativi restituiscono 403 con messaggio esplicito,
+      // ritorna un 403 strutturato per mostrare un errore chiaro al frontend
+      const hasForbiddenVehicles = attempts.some(a =>
+        a && a.status === 403 && typeof a.body === 'string' && /not allowed to access endpoint:\s*\[?vehicles\]?/i.test(a.body)
+      );
+      if (hasForbiddenVehicles) {
+        // Espone anche l'header con l'ID sandbox per coerenza
+        res.setHeader('x-autotrader-sandbox-id', sandboxId || '');
+        return res.status(403).json({
+          error: 'Accesso negato a /vehicles',
+          code: 'AUTOTRADER_FORBIDDEN',
+          message: 'Il token sandbox non ha i permessi per accedere all\'endpoint /vehicles. Contatta il provider per abilitare l\'accesso.',
+          advertiserId: sandboxId || undefined,
+          attempts
+        });
+      }
       return res.status(502).json({
         error: 'Nessun endpoint Autotrader ha risposto con successo',
         attempts

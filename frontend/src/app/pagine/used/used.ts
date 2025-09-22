@@ -6,13 +6,14 @@ import { CommonModule } from '@angular/common';
 // JsonPipe removed because it's no longer used in the template
 import { Filter } from '../../filter/filter';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-used',
   standalone: true,
   templateUrl: './used.html',
   styleUrl: './used.css',
-  imports: [Header, Footer, CommonModule, Filter, HttpClientModule]
+  imports: [Header, Footer, CommonModule, Filter, HttpClientModule, RouterModule]
 })
 
 export class UsedComponent implements OnInit, OnDestroy {
@@ -21,6 +22,7 @@ export class UsedComponent implements OnInit, OnDestroy {
 
   // Normalized list for display
   public vehicles: VehicleCard[] = [];
+  public errorBanner: { title: string; detail?: string } | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -52,15 +54,54 @@ export class UsedComponent implements OnInit, OnDestroy {
     const url = 'http://localhost:3000/api/vehicles';
     this.http.get<any>(url).subscribe({
       next: (res) => {
-        // Expect shape: { vehicles: array | object }
-        const raw = Array.isArray(res?.vehicles) ? res.vehicles : (res?.vehicles?.items || res?.vehicles?.results || []);
-        const cards: VehicleCard[] = (raw || []).map((it: any) => this.toCard(it)).filter(Boolean) as VehicleCard[];
+        // Normalize common API shapes to a flat array
+        this.errorBanner = null;
+        const arr = this.normalizeArrayResponse(res);
+        const cards: VehicleCard[] = (arr || []).map((it: any) => this.toCard(it)).filter(Boolean) as VehicleCard[];
         this.vehicles = cards;
       },
       error: (err) => {
         console.warn('Errore caricando /api/vehicles:', err);
+        // HttpErrorResponse shape from Angular
+        const status = err?.status;
+        const body = err?.error;
+        if (status === 403 && body && (body.code === 'AUTOTRADER_FORBIDDEN' || /accesso negato/i.test(body?.error))) {
+          const advertiserId = body?.advertiserId || (err?.headers?.get ? err.headers.get('x-autotrader-sandbox-id') : undefined);
+          this.errorBanner = {
+            title: 'L\'accesso ai veicoli è disabilitato per questo sandbox.',
+            detail: `Autotrader ha risposto 403 Forbidden sull\'endpoint /vehicles. ID sandbox: ${advertiserId ?? 'sconosciuto'}. Contatta il supporto per abilitare l\'endpoint.`
+          };
+          this.vehicles = [];
+          return;
+        }
+        this.errorBanner = {
+          title: 'Impossibile caricare le auto in questo momento.',
+          detail: 'Riprova più tardi. Se il problema persiste, contatta il supporto.'
+        };
       }
     });
+  }
+
+  private normalizeArrayResponse(res: any): any[] {
+    if (!res) return [];
+    // Direct array
+    if (Array.isArray(res)) return res;
+    // Common wrappers
+    const candidates = [
+      res.vehicles,
+      res.items,
+      res.results,
+      res.data,
+      res.stock,
+      res.adverts,
+      res.list
+    ];
+    for (const c of candidates) {
+      if (Array.isArray(c)) return c;
+      if (c && Array.isArray(c.items)) return c.items;
+      if (c && Array.isArray(c.results)) return c.results;
+    }
+    return [];
   }
 
   private toCard(item: any): VehicleCard | null {
@@ -93,7 +134,8 @@ export class UsedComponent implements OnInit, OnDestroy {
       fuel: fuel || undefined,
       year: this.toNumber(year),
       registration: registration || undefined,
-      imageUrl
+      imageUrl,
+      raw: item
     };
   }
 
@@ -164,4 +206,5 @@ interface VehicleCard {
   year?: number;
   registration?: string;
   imageUrl?: string;
+  raw?: any;
 }

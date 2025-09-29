@@ -1,32 +1,77 @@
 <app-header></app-header>
 <div class="used-page-layout">
   <div class="used-filter">
-    <app-filter></app-filter>
+    <app-filter [vehicles]="allVehicles" (filterChange)="onFilterChange($event)"></app-filter>
   </div>
   <div class="used-content">
-    <h1>Used Cars</h1>
+    <div class="page-header">
+      <h1>Premium Used Cars</h1>
+      <p class="page-subtitle">Discover our carefully selected collection of quality pre-owned vehicles</p>
+      <div class="stats-bar" *ngIf="filteredVehicles.length > 0">
+        <div class="stat-item">
+          <span class="stat-number">{{ filteredVehicles.length }}</span>
+          <span class="stat-label">Available Cars</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getUniqueCount('make') }}</span>
+          <span class="stat-label">Brands</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getAveragePrice() | currency:'GBP':'symbol':'1.0-0' }}</span>
+          <span class="stat-label">Avg. Price</span>
+        </div>
+      </div>
+    </div>
     <div *ngIf="errorBanner" class="alert-banner" role="alert">
       <div class="alert-title">{{ errorBanner.title }}</div>
       <div class="alert-detail" *ngIf="errorBanner.detail">{{ errorBanner.detail }}</div>
     </div>
     <div class="vehicle-grid" *ngIf="!errorBanner">
-    <a class="vehicle-card" *ngFor="let v of vehicles"
+    <a class="vehicle-card" *ngFor="let v of filteredVehicles; let i = index"
       [routerLink]="['/car', v.id]"
       [queryParams]="{ title: v.title }"
       [state]="{ vehicle: v }"
+      [style.animation-delay]="(i * 100) + 'ms'"
       role="button">
+        <div class="vehicle-badge" *ngIf="v.year && v.year >= 2020">
+          <span>Recent</span>
+        </div>
         <div class="vehicle-image">
-          <img [src]="v.imageUrl || '/assets/image.png'" alt="{{ v.title }}" />
+          <img [src]="v.imageUrl || '/assets/27277.jpg'" alt="{{ v.title }}" />
+          <div class="image-overlay">
+            <div class="view-details">View Details</div>
+          </div>
         </div>
         <div class="vehicle-body">
           <h3 class="vehicle-title">{{ v.title }}</h3>
           <div class="vehicle-subtitle" *ngIf="v.subtitle">{{ v.subtitle }}</div>
-          <div class="vehicle-meta">
-            <span *ngIf="v.fuel">{{ v.fuel }}</span>
-            <span *ngIf="v.mileage">{{ v.mileage | number }} km</span>
+          <div class="vehicle-specs">
+            <div class="spec-row">
+              <span class="spec-label">Year:</span>
+              <span class="spec-value">{{ v.year || 'N/A' }}</span>
+            </div>
+            <div class="spec-row" *ngIf="v.fuel">
+              <span class="spec-label">Fuel:</span>
+              <span class="spec-value">{{ v.fuel }}</span>
+            </div>
+            <div class="spec-row" *ngIf="v.mileage">
+              <span class="spec-label">Mileage:</span>
+              <span class="spec-value">{{ v.mileage | number }} km</span>
+            </div>
           </div>
         </div>
-        <div class="vehicle-price" *ngIf="v.price">£ {{ v.price | number:'1.0-0' }}</div>
+        <div class="vehicle-footer">
+          <div class="vehicle-price">
+            <span class="price-label">{{ v.price ? 'Starting from' : 'Price' }}</span>
+            <span class="price-amount">{{ v.price ? ('£' + (v.price | number:'1.0-0')) : 'On Request' }}</span>
+          </div>
+          <div class="action-button">
+            <span>Enquire Now</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M7 17L17 7M17 7H7M17 7V17"/>
+            </svg>
+          </div>
+        </div>
       </a>
     </div>
   </div>

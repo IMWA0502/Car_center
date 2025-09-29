@@ -2,14 +2,15 @@
     <h1>Filter</h1>
     <div>
         <p>Make</p>
-    <select id="make" [(ngModel)]="selectedmake" class="model-select">
+        <select id="make" [(ngModel)]="selectedmake" class="model-select" (change)="onFilterChange()">
             <option *ngFor="let make of makes" [value]="make">{{ make }}</option>
         </select>
     </div>
 
     <div>
         <p>Model</p>
-        <select id="model" [(ngModel)]="selectedmodel" class="model-select">
+        <select id="model" [(ngModel)]="selectedmodel" class="model-select" (change)="onFilterChange()">
+            <option value="All">All Models</option>
             <option *ngFor="let model of models" [value]="model">{{ model }}</option>
         </select>
     </div>
@@ -18,44 +19,63 @@
         <h2>Body Type</h2>
         <div *ngFor="let type of bodyTypes">
             <label>
-                <input type="checkbox" [(ngModel)]="type.selected" />
+                <input type="checkbox" [(ngModel)]="type.selected" (change)="onFilterChange()" />
                 {{ type.name }} <span style="color: #888;">({{ type.count }})</span>
             </label>
         </div>
     </div>
+    
     <div>
-    <h2>Price</h2>
-    <input type="range" min="690" max="9690" [(ngModel)]="price" class="slider" />
-        <div style="color: #888;">£{{ price }}</div>
+        <h2>Price Range</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="range" [min]="priceMin" [max]="priceMax" [(ngModel)]="priceMin" class="slider" (input)="onFilterChange()" />
+            <span>-</span>
+            <input type="range" [min]="priceMin" [max]="priceMax" [(ngModel)]="priceMax" class="slider" (input)="onFilterChange()" />
+        </div>
+        <div style="color: #888;">£{{ priceMin | number:'1.0-0' }} - £{{ priceMax | number:'1.0-0' }}</div>
+    </div>
 
-    <h2>Year of Issue</h2>
-    <input type="range" min="2008" max="2019" [(ngModel)]="year" class="slider" />
-        <div style="color: #888;">{{ year }}</div>
+    <div>
+        <h2>Year Range</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="range" [min]="yearMin" [max]="yearMax" [(ngModel)]="yearMin" class="slider" (input)="onFilterChange()" />
+            <span>-</span>
+            <input type="range" [min]="yearMin" [max]="yearMax" [(ngModel)]="yearMax" class="slider" (input)="onFilterChange()" />
+        </div>
+        <div style="color: #888;">{{ yearMin }} - {{ yearMax }}</div>
+    </div>
 
-    <h2>Mileage</h2>
-    <input type="range" min="36000" max="196000" [(ngModel)]="mileage" class="slider" />
-        <div style="color: #888;">{{ mileage | number }} km</div>
-
-    <h2>Engine Capacity</h2>
-    <input type="range" min="1" max="3" step="0.1" [(ngModel)]="engineCapacity" class="slider" />
-        <div style="color: #888;">{{ engineCapacity }}L</div>
+    <div>
+        <h2>Mileage Range</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="range" [min]="mileageMin" [max]="mileageMax" [(ngModel)]="mileageMin" class="slider" (input)="onFilterChange()" />
+            <span>-</span>
+            <input type="range" [min]="mileageMin" [max]="mileageMax" [(ngModel)]="mileageMax" class="slider" (input)="onFilterChange()" />
+        </div>
+        <div style="color: #888;">{{ mileageMin | number }} - {{ mileageMax | number }} km</div>
+    </div>
     
-            <div>
-                <h2>Engine Type</h2>
-                <div *ngFor="let engine of engineTypes">
-                    <label>
-                        <input type="checkbox" [(ngModel)]="engine.selected" />
-                        {{ engine.name }} <span style="color: #888;">({{ engine.count }})</span>
-                    </label>
-                </div>
+    <div>
+        <h2>Engine Type</h2>
+        <div *ngFor="let engine of engineTypes">
+            <label>
+                <input type="checkbox" [(ngModel)]="engine.selected" (change)="onFilterChange()" />
+                {{ engine.name }} <span style="color: #888;">({{ engine.count }})</span>
+            </label>
+        </div>
+    </div>
+
+    <div>
+        <h2>Drivetrain</h2>
+        <div *ngFor="let drive of drivetrains">
+            <label>
+                <input type="checkbox" [(ngModel)]="drive.selected" (change)="onFilterChange()" />
+                {{ drive.name }} <span style="color: #888;">({{ drive.count }})</span>
+            </label>
+        </div>
+    </div>
     
-                <h2>Drivetrain</h2>
-                <div *ngFor="let drive of drivetrains">
-                    <label>
-                        <input type="checkbox" [(ngModel)]="drive.selected" />
-                        {{ drive.name }} <span style="color: #888;">({{ drive.count }})</span>
-                    </label>
-                </div>
-            </div>
-</div>                
+    <button type="button" (click)="clearFilters()" style="margin-top: 20px; padding: 10px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Clear All Filters
+    </button>
 </div>

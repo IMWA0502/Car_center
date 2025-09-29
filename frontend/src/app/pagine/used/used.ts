@@ -8,6 +8,20 @@ import { Filter } from '../../filter/filter';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
+interface FilterCriteria {
+  make?: string;
+  model?: string;
+  bodyTypes: string[];
+  priceMin: number;
+  priceMax: number;
+  yearMin: number;
+  yearMax: number;
+  mileageMin: number;
+  mileageMax: number;
+  engineTypes: string[];
+  drivetrains: string[];
+}
+
 @Component({
   selector: 'app-used',
   standalone: true,
@@ -21,7 +35,8 @@ export class UsedComponent implements OnInit, OnDestroy {
   public autotraderData: any[] = [];
 
   // Normalized list for display
-  public vehicles: VehicleCard[] = [];
+  public allVehicles: VehicleCard[] = [];
+  public filteredVehicles: VehicleCard[] = [];
   public errorBanner: { title: string; detail?: string } | null = null;
 
   constructor(private http: HttpClient) {}
@@ -36,7 +51,10 @@ export class UsedComponent implements OnInit, OnDestroy {
       console.log('Ricevuto dal backend:', data);
       this.autotraderData.push(data);
       const card = this.toCard(data);
-      if (card) this.vehicles.unshift(card);
+      if (card) {
+        this.allVehicles.unshift(card);
+        this.filteredVehicles = [...this.allVehicles];
+      }
     });
 
     // Fetch initial data from backend REST API
@@ -58,7 +76,8 @@ export class UsedComponent implements OnInit, OnDestroy {
         this.errorBanner = null;
         const arr = this.normalizeArrayResponse(res);
         const cards: VehicleCard[] = (arr || []).map((it: any) => this.toCard(it)).filter(Boolean) as VehicleCard[];
-        this.vehicles = cards;
+        this.allVehicles = cards;
+        this.filteredVehicles = [...cards];
       },
       error: (err) => {
         console.warn('Errore caricando /api/vehicles:', err);
@@ -68,10 +87,11 @@ export class UsedComponent implements OnInit, OnDestroy {
         if (status === 403 && body && (body.code === 'AUTOTRADER_FORBIDDEN' || /accesso negato/i.test(body?.error))) {
           const advertiserId = body?.advertiserId || (err?.headers?.get ? err.headers.get('x-autotrader-sandbox-id') : undefined);
           this.errorBanner = {
-            title: 'L\'accesso ai veicoli è disabilitato per questo sandbox.',
-            detail: `Autotrader ha risposto 403 Forbidden sull\'endpoint /vehicles. ID sandbox: ${advertiserId ?? 'sconosciuto'}. Contatta il supporto per abilitare l\'endpoint.`
+            title: 'L\'accesso alla Stock API è disabilitato per questo sandbox.',
+            detail: `AutoTrader ha risposto 403 Forbidden sull\'endpoint /stock. ID sandbox: ${advertiserId ?? 'sconosciuto'}. Contatta il supporto per abilitare la Stock API.`
           };
-          this.vehicles = [];
+          this.allVehicles = [];
+          this.filteredVehicles = [];
           return;
         }
         this.errorBanner = {
@@ -111,8 +131,8 @@ export class UsedComponent implements OnInit, OnDestroy {
 
     const make = v?.make || v?.manufacturer || v?.brand;
     const model = v?.model || v?.derivative || v?.variant;
-    const year = v?.year || v?.registrationYear || this.tryParseYear(v?.firstRegistration || v?.registration);
-    const price = v?.price || v?.priceGBP || v?.retailPrice || v?.price_gbp;
+    const year = v?.year || v?.yearOfManufacture || v?.registrationYear || this.tryParseYear(v?.firstRegistration || v?.registration);
+    const price = v?.price || v?.priceGBP || v?.retailPrice || v?.price_gbp || v?.askingPrice || v?.salePrice || v?.listPrice;
     const mileage = v?.mileage || v?.odometer || v?.odometerReading;
     const fuel = v?.fuel || v?.fuelType;
     const registration = v?.registration || v?.plate || v?.vrm;
@@ -159,40 +179,112 @@ export class UsedComponent implements OnInit, OnDestroy {
 
   private getImageUrl(obj: any): string | undefined {
     if (!obj) return undefined;
-    // Common fields
+    
+    // Prova prima i campi diretti più comuni
     const direct = this.firstNonEmpty(
-      obj.imageUrl, obj.imageURL, obj.image, obj.thumbnailUrl, obj.thumbnail
+      obj.imageUrl, obj.imageURL, obj.image, obj.thumbnailUrl, obj.thumbnail,
+      obj.mainImageUrl, obj.primaryImage, obj.photo, obj.photoUrl,
+      // AutoTrader Stock API potrebbe usare questi campi
+      obj.images?.[0]?.url, obj.images?.[0]?.href, obj.images?.[0]?.link,
+      obj.media?.image, obj.media?.photo, obj.vehicle?.image
     );
     if (direct) return String(direct);
 
-    // Arrays of images/photos/media
+    // Arrays di immagini/foto/media con ricerca più approfondita
     const arrs: any[] = [
       obj.images, obj.photos, obj.media?.images, obj.media?.photos,
-      obj.vehicle?.images, obj.vehicle?.photos, obj.vehicle?.media?.images
+      obj.vehicle?.images, obj.vehicle?.photos, obj.vehicle?.media?.images,
+      obj.imageUrls, obj.photoUrls, obj.gallery
     ].filter(Array.isArray);
+    
     for (const arr of arrs) {
       if (!arr || !arr.length) continue;
-      const first = arr[0];
-      const candidate = this.firstNonEmpty(first?.url, first?.href, first?.link, first?.source, first?.src);
-      if (candidate) return String(candidate);
+      for (const item of arr) {
+        const candidate = this.firstNonEmpty(
+          item?.url, item?.href, item?.link, item?.source, item?.src,
+          item?.original, item?.large, item?.medium, item?.small,
+          typeof item === 'string' ? item : undefined
+        );
+        if (candidate) return String(candidate);
+      }
     }
     return undefined;
   }
 
   private pickImage(make?: string): string {
-    if (!make) return '/assets/image.png';
-    const m = String(make).toLowerCase();
-    // Try to map to available brand images
-    const map: Record<string, string> = {
-      audi: '/assets/Nuova cartella/audi.png',
-      bmw: '/assets/Nuova cartella/bmw.png',
-      ford: '/assets/Nuova cartella/ford.png',
-      ferrari: '/assets/Nuova cartella/ferrari.png',
-      nissan: '/assets/Nuova cartella/nissan.png',
-      mercedes: '/assets/Nuova cartella/marcedes.png',
-      toyota: '/assets/Nuova cartella/tayota.png',
-    };
-    return map[m] || '/assets/image.png';
+    // Usa sempre la foto auto generica invece dei loghi brand
+    return '/assets/27277.jpg';
+  }
+
+  // Metodi per le statistiche nella header
+  getUniqueCount(field: string): number {
+    if (field === 'make') {
+      const makes = this.filteredVehicles.map((v: VehicleCard) => v.title.split(' ')[0]).filter(Boolean);
+      return new Set(makes).size;
+    }
+    return 0;
+  }
+
+  getAveragePrice(): number {
+    const prices = this.filteredVehicles.map((v: VehicleCard) => v.price).filter(Boolean) as number[];
+    if (prices.length === 0) return 0;
+    return prices.reduce((sum, price) => sum + price, 0) / prices.length;
+  }
+
+  onFilterChange(criteria: FilterCriteria) {
+    this.filteredVehicles = this.allVehicles.filter(vehicle => {
+      // Filter by make
+      if (criteria.make && !vehicle.title.toLowerCase().includes(criteria.make.toLowerCase())) {
+        return false;
+      }
+
+      // Filter by body types
+      if (criteria.bodyTypes.length > 0) {
+        const vehicleBodyType = vehicle.raw?.bodyType?.toLowerCase() || vehicle.raw?.category?.toLowerCase() || '';
+        if (!criteria.bodyTypes.some(type => vehicleBodyType.includes(type.toLowerCase()))) {
+          return false;
+        }
+      }
+
+      // Filter by price
+      if (vehicle.price) {
+        if (vehicle.price < criteria.priceMin || vehicle.price > criteria.priceMax) {
+          return false;
+        }
+      }
+
+      // Filter by year
+      if (vehicle.year) {
+        if (vehicle.year < criteria.yearMin || vehicle.year > criteria.yearMax) {
+          return false;
+        }
+      }
+
+      // Filter by mileage
+      if (vehicle.mileage) {
+        if (vehicle.mileage < criteria.mileageMin || vehicle.mileage > criteria.mileageMax) {
+          return false;
+        }
+      }
+
+      // Filter by engine types
+      if (criteria.engineTypes.length > 0) {
+        const vehicleFuel = vehicle.fuel?.toLowerCase() || '';
+        if (!criteria.engineTypes.some(type => vehicleFuel.includes(type.toLowerCase()))) {
+          return false;
+        }
+      }
+
+      // Filter by drivetrains
+      if (criteria.drivetrains.length > 0) {
+        const vehicleDrivetrain = vehicle.raw?.drivetrain?.toLowerCase() || '';
+        if (!criteria.drivetrains.some(drive => vehicleDrivetrain.includes(drive.toLowerCase()))) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   }
 }
 

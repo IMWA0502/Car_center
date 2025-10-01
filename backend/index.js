@@ -42,7 +42,7 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
   }
 };
 
-// Nuova rotta: ottieni tutte le auto dal sandbox Autotrader
+// Nuova rotta: ottieni lo stock dal sandbox Autotrader usando Stock API
 app.get('/api/vehicles', async (req, res) => {
   try {
 
@@ -85,11 +85,10 @@ app.get('/api/vehicles', async (req, res) => {
       return res.status(401).json({ error: 'Token non trovato', details: authData });
     }
 
-    // --- CHIAMATA DATI: RICHIESTA AI VEICOLI ---
-    // Nota: rimosso il tentativo di discovery dei forecourts e gli endpoint non documentati.
-    // Prova una lista estesa di endpoint (configurabile via env) perché non tutti gli account sandbox
-    // hanno permessi sugli stessi percorsi. Varianti: advertiser_id vs advertiserId, /search, /forecourts stock.
-    const templateFromEnv = process.env.AUTOTRADER_VEHICLES_ENDPOINT || '';
+    // --- CHIAMATA DATI: RICHIESTA STOCK API ---
+    // Risposta AutoTrader: "You would use the Stock API to pull back the Stock that would be listed on the respected Advertiser ID"
+    // Per dealer websites si usa Stock API, non Vehicles API
+    const templateFromEnv = process.env.AUTOTRADER_STOCK_ENDPOINT || '';
     const pageSize = process.env.AUTOTRADER_PAGE_SIZE || '50';
 
     // Helper per aggiungere parametri di paginazione se l'endpoint li supporta
@@ -102,12 +101,12 @@ app.get('/api/vehicles', async (req, res) => {
       return `${url}${sep}page=1&page_size=${encodeURIComponent(pageSize)}`;
     };
 
-    // Costruisci una lista di URL-candidati da provare in ordine (solo endpoint documentati)
+    // Costruisci una lista di URL-candidati da provare in ordine - Stock API endpoints
     const baseCandidates = [
-      // Tentativo diretto senza parametri, come richiesto
-      'https://api-sandbox.autotrader.co.uk/vehicles',
-      'https://api-sandbox.autotrader.co.uk/vehicles?advertiser_id={advertiserId}',
-      'https://api-sandbox.autotrader.co.uk/vehicles?advertiserId={advertiserId}'
+      // Stock API endpoints come indicato dal supporto AutoTrader
+      'https://api-sandbox.autotrader.co.uk/stock?advertiser_id={advertiserId}',
+      'https://api-sandbox.autotrader.co.uk/stock?advertiserId={advertiserId}',
+      'https://api-sandbox.autotrader.co.uk/stock'
     ];
 
     const tryTemplates = [
@@ -149,16 +148,16 @@ app.get('/api/vehicles', async (req, res) => {
     if (!success) {
       // Se tutti o parte dei tentativi restituiscono 403 con messaggio esplicito,
       // ritorna un 403 strutturato per mostrare un errore chiaro al frontend
-      const hasForbiddenVehicles = attempts.some(a =>
-        a && a.status === 403 && typeof a.body === 'string' && /not allowed to access endpoint:\s*\[?vehicles\]?/i.test(a.body)
+      const hasForbiddenStock = attempts.some(a =>
+        a && a.status === 403 && typeof a.body === 'string' && /not allowed to access endpoint:\s*\[?(stock|vehicles)\]?/i.test(a.body)
       );
-      if (hasForbiddenVehicles) {
+      if (hasForbiddenStock) {
         // Espone anche l'header con l'ID sandbox per coerenza
         res.setHeader('x-autotrader-sandbox-id', sandboxId || '');
         return res.status(403).json({
-          error: 'Accesso negato a /vehicles',
+          error: 'Accesso negato alla Stock API',
           code: 'AUTOTRADER_FORBIDDEN',
-          message: 'Il token sandbox non ha i permessi per accedere all\'endpoint /vehicles. Contatta il provider per abilitare l\'accesso.',
+          message: 'Il token sandbox non ha i permessi per accedere all\'endpoint /stock. Contatta il provider per abilitare l\'accesso alla Stock API.',
           advertiserId: sandboxId || undefined,
           attempts
         });
@@ -170,14 +169,14 @@ app.get('/api/vehicles', async (req, res) => {
     }
 
     const data = await success.resp.json();
-    console.log('Risultato GET /api/vehicles da:', success.url);
+    console.log('Risultato GET /api/vehicles (Stock API) da:', success.url);
     // Includo l'ID sandbox nella risposta e anche in un header dedicato
     res.setHeader('x-autotrader-sandbox-id', sandboxId);
     res.json({ sandboxId, source: success.url, vehicles: data });
   } catch (error) {
     // Gestione errori generici (es. problemi di rete, token, ecc.)
-    console.error('Errore nel recupero auto:', error);
-    res.status(500).json({ error: 'Impossibile recuperare le auto', details: error });
+    console.error('Errore nel recupero stock:', error);
+    res.status(500).json({ error: 'Impossibile recuperare lo stock', details: error });
   }
 });
 

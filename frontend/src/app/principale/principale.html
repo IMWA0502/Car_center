@@ -7,12 +7,14 @@
 <p class="principale-description">Choose your new car with us</p>
 
 <div class="input-row">
-  <input type="text" placeholder="Make">
-  <input type="text" placeholder="Model">
+  <select [(ngModel)]="selectedMake" class="make-select">
+    <option value="" disabled>Select Make</option>
+    <option *ngFor="let make of makes" [value]="make">{{ make }}</option>
+  </select>
 </div>
 
 <div class="search-btn-row">
-  <button class="search-btn" routerLink="/search">
+  <button class="search-btn" (click)="onSearch()">
     <span style="display:inline-flex; align-items:center; margin-right:0.7rem;">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" style="vertical-align:middle;"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2"/><line x1="17" y1="17" x2="22" y2="22" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
     </span>

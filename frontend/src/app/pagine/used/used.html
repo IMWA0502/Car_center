@@ -1,7 +1,7 @@
 <app-header></app-header>
 <div class="used-page-layout">
   <div class="used-filter">
-    <app-filter [vehicles]="allVehicles" (filterChange)="onFilterChange($event)"></app-filter>
+    <app-filter [vehicles]="allVehicles" [initialMake]="initialMake" (filterChange)="onFilterChange($event)"></app-filter>
   </div>
   <div class="used-content">
     <div class="page-header">
@@ -15,10 +15,6 @@
         <div class="stat-item">
           <span class="stat-number">{{ getUniqueCount('make') }}</span>
           <span class="stat-label">Brands</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ getAveragePrice() | currency:'GBP':'symbol':'1.0-0' }}</span>
-          <span class="stat-label">Avg. Price</span>
         </div>
       </div>
     </div>
@@ -54,16 +50,16 @@
               <span class="spec-label">Fuel:</span>
               <span class="spec-value">{{ v.fuel }}</span>
             </div>
-            <div class="spec-row" *ngIf="v.mileage">
+            <div class="spec-row">
               <span class="spec-label">Mileage:</span>
-              <span class="spec-value">{{ v.mileage | number }} km</span>
+              <span class="spec-value">{{ v.mileage ? (v.mileage | number) + ' km' : 'N/A' }}</span>
             </div>
           </div>
         </div>
         <div class="vehicle-footer">
           <div class="vehicle-price">
-            <span class="price-label">{{ v.price ? 'Starting from' : 'Price' }}</span>
-            <span class="price-amount">{{ v.price ? ('£' + (v.price | number:'1.0-0')) : 'On Request' }}</span>
+            <span class="price-label">{{ v.priceOnApplication ? 'Price' : (v.price ? 'Starting from' : 'Price') }}</span>
+            <span class="price-amount">{{ v.priceOnApplication ? 'On Request' : (v.price ? ('£' + (v.price | number:'1.0-0')) : 'On Request') }}</span>
           </div>
           <div class="action-button">
             <span>Enquire Now</span>

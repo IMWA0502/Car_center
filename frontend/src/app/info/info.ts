@@ -7,4 +7,21 @@ import { RouterModule } from '@angular/router';
   templateUrl: './info.html',
   styleUrl: './info.css'
 })
-export class Info {}
+export class Info {
+  
+  openInstagram() {
+    window.open('https://www.instagram.com/', '_blank');
+  }
+
+  openFacebook() {
+    window.open('https://www.facebook.com/', '_blank');
+  }
+
+  openTwitter() {
+    window.open('https://www.twitter.com/', '_blank');
+  }
+
+  openLinkedIn() {
+    window.open('https://www.linkedin.com/', '_blank');
+  }
+}

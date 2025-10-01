@@ -99,16 +99,6 @@
 
 
 
-/* caret ▼ sulle voci rilevanti:
-   4 = SELL YOUR CAR, 5 = REVIEWS/Complaints, e il bottone della dropdown */
-.header-btn-group .header-btn:nth-child(4)::after,
-.header-btn-group .header-btn:nth-child(5)::after,
-.dropdown > .dropdown-toggle::after {
-	content: '\25BE';
-	margin-left: .5rem;
-	font-size: .9rem;
-}
-
 /* assicura che i link-ancora con classe header-btn non abbiano sottolineatura */
 .header-btn-group a.header-btn { text-decoration: none; color: inherit; }
 

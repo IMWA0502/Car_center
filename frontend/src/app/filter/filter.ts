@@ -50,10 +50,18 @@ export class Filter implements OnChanges {
   
   priceMin: number = 0;
   priceMax: number = 100000;
+  currentPriceMin: number = 0;
+  currentPriceMax: number = 100000;
+  
   yearMin: number = 2000;
   yearMax: number = 2025;
+  currentYearMin: number = 2000;
+  currentYearMax: number = 2025;
+  
   mileageMin: number = 0;
   mileageMax: number = 300000;
+  currentMileageMin: number = 0;
+  currentMileageMax: number = 300000;
 
   engineTypes = [
     { name: 'Petrol', count: 0, selected: false },
@@ -101,6 +109,8 @@ export class Filter implements OnChanges {
     if (prices.length > 0) {
       this.priceMin = Math.min(...prices);
       this.priceMax = Math.max(...prices);
+      this.currentPriceMin = this.priceMin;
+      this.currentPriceMax = this.priceMax;
     }
 
     // Aggiorna range anni
@@ -108,6 +118,8 @@ export class Filter implements OnChanges {
     if (years.length > 0) {
       this.yearMin = Math.min(...years);
       this.yearMax = Math.max(...years);
+      this.currentYearMin = this.yearMin;
+      this.currentYearMax = this.yearMax;
     }
 
     // Aggiorna range mileage
@@ -115,6 +127,8 @@ export class Filter implements OnChanges {
     if (mileages.length > 0) {
       this.mileageMin = Math.min(...mileages);
       this.mileageMax = Math.max(...mileages);
+      this.currentMileageMin = this.mileageMin;
+      this.currentMileageMax = this.mileageMax;
     }
   }
 
@@ -123,12 +137,12 @@ export class Filter implements OnChanges {
       make: this.selectedmake === 'All' ? undefined : this.selectedmake,
       model: this.selectedmodel === 'All' ? undefined : this.selectedmodel,
       bodyTypes: this.bodyTypes.filter(t => t.selected).map(t => t.name),
-      priceMin: this.priceMin,
-      priceMax: this.priceMax,
-      yearMin: this.yearMin,
-      yearMax: this.yearMax,
-      mileageMin: this.mileageMin,
-      mileageMax: this.mileageMax,
+      priceMin: this.currentPriceMin,
+      priceMax: this.currentPriceMax,
+      yearMin: this.currentYearMin,
+      yearMax: this.currentYearMax,
+      mileageMin: this.currentMileageMin,
+      mileageMax: this.currentMileageMax,
       engineTypes: this.engineTypes.filter(t => t.selected).map(t => t.name),
       drivetrains: this.drivetrains.filter(t => t.selected).map(t => t.name)
     };
@@ -142,6 +156,36 @@ export class Filter implements OnChanges {
     this.engineTypes.forEach(t => t.selected = false);
     this.drivetrains.forEach(t => t.selected = false);
     this.updateFilterOptions(); // Reset ranges
+    this.onFilterChange();
+  }
+
+  onPriceRangeChange() {
+    // Assicura che min <= max
+    if (this.currentPriceMin > this.currentPriceMax) {
+      const temp = this.currentPriceMin;
+      this.currentPriceMin = this.currentPriceMax;
+      this.currentPriceMax = temp;
+    }
+    this.onFilterChange();
+  }
+
+  onYearRangeChange() {
+    // Assicura che min <= max
+    if (this.currentYearMin > this.currentYearMax) {
+      const temp = this.currentYearMin;
+      this.currentYearMin = this.currentYearMax;
+      this.currentYearMax = temp;
+    }
+    this.onFilterChange();
+  }
+
+  onMileageRangeChange() {
+    // Assicura che min <= max
+    if (this.currentMileageMin > this.currentMileageMax) {
+      const temp = this.currentMileageMin;
+      this.currentMileageMin = this.currentMileageMax;
+      this.currentMileageMax = temp;
+    }
     this.onFilterChange();
   }
 }

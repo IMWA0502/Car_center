@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 
 interface FilterCriteria {
   make?: string;
-  model?: string;
-  bodyTypes: string[];
   priceMin: number;
   priceMax: number;
   yearMin: number;
@@ -13,7 +11,6 @@ interface FilterCriteria {
   mileageMin: number;
   mileageMax: number;
   engineTypes: string[];
-  drivetrains: string[];
 }
 
 @Component({
@@ -25,28 +22,11 @@ interface FilterCriteria {
 })
 export class Filter implements OnChanges {
   @Input() vehicles: any[] = [];
+  @Input() initialMake: string | null = null;
   @Output() filterChange = new EventEmitter<FilterCriteria>();
 
   makes: string[] = [];
   selectedmake: string = '';
-
-  models: string[] = [];
-  selectedmodel: string = '';
-  
-  bodyTypes = [
-    { name: 'Sedan', count: 0, selected: false },
-    { name: 'Hatchback', count: 0, selected: false },
-    { name: 'SUV', count: 0, selected: false },
-    { name: 'Crossover', count: 0, selected: false },
-    { name: 'Coupe', count: 0, selected: false },
-    { name: 'Convertible', count: 0, selected: false },
-    { name: 'Van', count: 0, selected: false },
-    { name: 'Bus', count: 0, selected: false },
-    { name: 'Truck', count: 0, selected: false },
-    { name: 'Saloon', count: 0, selected: false },
-    { name: 'Estate', count: 0, selected: false },
-    { name: 'MPV', count: 0, selected: false }
-  ];
   
   priceMin: number = 0;
   priceMax: number = 100000;
@@ -71,16 +51,18 @@ export class Filter implements OnChanges {
     { name: 'Petrol Hybrid', count: 0, selected: false }
   ];
 
-  drivetrains = [
-    { name: 'AWD', count: 0, selected: false },
-    { name: 'FWD', count: 0, selected: false },
-    { name: 'RWD', count: 0, selected: false },
-    { name: '4WD', count: 0, selected: false }
-  ];
-
   ngOnChanges(changes: SimpleChanges) {
     if (changes['vehicles'] && this.vehicles.length > 0) {
       this.updateFilterOptions();
+    }
+    
+    // Applica il filtro iniziale se specificato
+    if (changes['initialMake'] && this.initialMake) {
+      this.selectedmake = this.initialMake;
+      // Aspetta che le opzioni siano caricate prima di applicare il filtro
+      setTimeout(() => {
+        this.onFilterChange();
+      }, 100);
     }
   }
 
@@ -89,14 +71,6 @@ export class Filter implements OnChanges {
     const makes = [...new Set(this.vehicles.map(v => v.title.split(' ')[0]).filter(Boolean))];
     this.makes = ['All', ...makes.sort()];
     
-    // Aggiorna counts per body types
-    this.bodyTypes.forEach(type => {
-      type.count = this.vehicles.filter(v => 
-        v.raw?.bodyType?.toLowerCase() === type.name.toLowerCase() ||
-        v.raw?.category?.toLowerCase() === type.name.toLowerCase()
-      ).length;
-    });
-
     // Aggiorna counts per engine types
     this.engineTypes.forEach(type => {
       type.count = this.vehicles.filter(v => 
@@ -135,27 +109,26 @@ export class Filter implements OnChanges {
   onFilterChange() {
     const criteria: FilterCriteria = {
       make: this.selectedmake === 'All' ? undefined : this.selectedmake,
-      model: this.selectedmodel === 'All' ? undefined : this.selectedmodel,
-      bodyTypes: this.bodyTypes.filter(t => t.selected).map(t => t.name),
       priceMin: this.currentPriceMin,
       priceMax: this.currentPriceMax,
       yearMin: this.currentYearMin,
       yearMax: this.currentYearMax,
       mileageMin: this.currentMileageMin,
       mileageMax: this.currentMileageMax,
-      engineTypes: this.engineTypes.filter(t => t.selected).map(t => t.name),
-      drivetrains: this.drivetrains.filter(t => t.selected).map(t => t.name)
+      engineTypes: this.engineTypes.filter(t => t.selected).map(t => t.name)
     };
     this.filterChange.emit(criteria);
   }
 
   clearFilters() {
     this.selectedmake = 'All';
-    this.selectedmodel = 'All';
-    this.bodyTypes.forEach(t => t.selected = false);
     this.engineTypes.forEach(t => t.selected = false);
-    this.drivetrains.forEach(t => t.selected = false);
     this.updateFilterOptions(); // Reset ranges
+    this.onFilterChange();
+  }
+
+  resetMake() {
+    this.selectedmake = 'All';
     this.onFilterChange();
   }
 

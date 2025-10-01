@@ -45,6 +45,13 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
 // Nuova rotta: ottieni lo stock dal sandbox Autotrader usando Stock API
 app.get('/api/vehicles', async (req, res) => {
   try {
+    // Estrai parametri di filtro dalla query string
+    const { make } = req.query;
+    
+    console.log('=== API CALL DEBUG ===');
+    console.log('Request query params:', req.query);
+    console.log('Make parameter:', make);
+    console.log('======================');
 
     // --- CONFIGURAZIONE CREDENZIALI API AUTOTRADER ---
     // Queste variabili sono fornite da Autotrader per accedere al sandbox (obbligatorie)
@@ -132,6 +139,7 @@ app.get('/api/vehicles', async (req, res) => {
         });
         if (resp.ok) {
           success = { url, resp };
+          console.log(`✅ ENDPOINT FUNZIONANTE: ${url}`);
           break;
         } else {
           const text = await resp.text();
@@ -170,9 +178,68 @@ app.get('/api/vehicles', async (req, res) => {
 
     const data = await success.resp.json();
     console.log('Risultato GET /api/vehicles (Stock API) da:', success.url);
+    
+    console.log('=== DATA STRUCTURE DEBUG ===');
+    console.log('Type of data:', typeof data);
+    console.log('Is array?', Array.isArray(data));
+    if (data) {
+      console.log('Data keys:', Object.keys(data));
+      if (data.vehicles) console.log('data.vehicles exists, length:', data.vehicles?.length);
+      if (data.data) console.log('data.data exists, length:', data.data?.length);
+      if (data.stock) console.log('data.stock exists, length:', data.stock?.length);
+    }
+    console.log('============================');
+    
+    // Applica filtri ai veicoli se specificati nei parametri query
+    let vehicles = data;
+    
+    // Se la risposta contiene un array di veicoli, filtralo
+    if (Array.isArray(data)) {
+      vehicles = data;
+    } else if (data && data.results && Array.isArray(data.results)) {
+      vehicles = data.results;
+    } else if (data && data.vehicles && Array.isArray(data.vehicles)) {
+      vehicles = data.vehicles;
+    } else if (data && data.data && Array.isArray(data.data)) {
+      vehicles = data.data;
+    } else if (data && Array.isArray(data.stock)) {
+      vehicles = data.stock;
+    }
+    
+    if (Array.isArray(vehicles) && make) {
+      console.log('=== BACKEND FILTER DEBUG ===');
+      console.log('Filtering for make:', make);
+      console.log('Total vehicles before filter:', vehicles.length);
+      
+      vehicles = vehicles.filter(vehicle => {
+        // Filtro per marca
+        const vehicleMake = (
+          vehicle?.vehicle?.make || 
+          vehicle?.make || 
+          vehicle?.brand || 
+          vehicle?.manufacturer ||
+          ''
+        ).toLowerCase();
+        
+        console.log('Vehicle make found:', vehicleMake);
+        const matches = vehicleMake.includes(make.toLowerCase());
+        console.log('Matches filter?', matches);
+        
+        return matches;
+      });
+      
+      console.log('Total vehicles after filter:', vehicles.length);
+      console.log('==============================');
+    }
+    
     // Includo l'ID sandbox nella risposta e anche in un header dedicato
     res.setHeader('x-autotrader-sandbox-id', sandboxId);
-    res.json({ sandboxId, source: success.url, vehicles: data });
+    res.json({ 
+      sandboxId, 
+      source: success.url, 
+      vehicles: vehicles,
+      filters: { make }
+    });
   } catch (error) {
     // Gestione errori generici (es. problemi di rete, token, ecc.)
     console.error('Errore nel recupero stock:', error);

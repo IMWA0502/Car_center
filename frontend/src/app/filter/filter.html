@@ -1,27 +1,22 @@
 <div class="filter-box">
     <h1>Filter</h1>
     <div>
-        <p>Make</p>
-        <select id="make" [(ngModel)]="selectedmake" class="model-select" (change)="onFilterChange()">
-            <option *ngFor="let make of makes" [value]="make">{{ make }}</option>
-        </select>
-    </div>
-
-    <div>
-        <p>Model</p>
-        <select id="model" [(ngModel)]="selectedmodel" class="model-select" (change)="onFilterChange()">
-            <option value="All">All Models</option>
-            <option *ngFor="let model of models" [value]="model">{{ model }}</option>
-        </select>
-    </div>
-
-    <div>
-        <h2>Body Type</h2>
-        <div *ngFor="let type of bodyTypes">
-            <label>
-                <input type="checkbox" [(ngModel)]="type.selected" (change)="onFilterChange()" />
-                {{ type.name }} <span style="color: #888;">({{ type.count }})</span>
-            </label>
+        <div class="make-header">
+            <p>Make</p>
+            <span *ngIf="selectedmake && selectedmake !== 'All'" class="current-selection">
+                Current: {{ selectedmake }}
+            </span>
+        </div>
+        <div class="make-controls">
+            <select id="make" [(ngModel)]="selectedmake" class="model-select" (change)="onFilterChange()">
+                <option *ngFor="let make of makes" [value]="make">{{ make }}</option>
+            </select>
+            <button *ngIf="selectedmake && selectedmake !== 'All'" 
+                    (click)="resetMake()" 
+                    class="reset-make-btn" 
+                    title="Reset Make Filter">
+                ✕
+            </button>
         </div>
     </div>
     
@@ -88,16 +83,6 @@
             <label>
                 <input type="checkbox" [(ngModel)]="engine.selected" (change)="onFilterChange()" />
                 {{ engine.name }} <span style="color: #888;">({{ engine.count }})</span>
-            </label>
-        </div>
-    </div>
-
-    <div>
-        <h2>Drivetrain</h2>
-        <div *ngFor="let drive of drivetrains">
-            <label>
-                <input type="checkbox" [(ngModel)]="drive.selected" (change)="onFilterChange()" />
-                {{ drive.name }} <span style="color: #888;">({{ drive.count }})</span>
             </label>
         </div>
     </div>

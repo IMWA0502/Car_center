@@ -1,27 +1,193 @@
-<div class="car-page">
-	<h1>Vehicle details</h1>
-	<div class="car-hero" *ngIf="title || id">
-		<h2>{{ title || 'Car' }}</h2>
-		<div class="muted">ID: {{ id }}</div>
-	</div>
+<!-- Car Detail Page - Professional Design -->
+<div class="car-detail-page">
+  
+  <!-- Navigation Header -->
+  <div class="nav-header">
+    <button class="back-btn" (click)="goBack()">
+      <span class="arrow">←</span> Back to Search
+    </button>
+    <div class="page-title">Vehicle Details</div>
+  </div>
 
-	<div *ngIf="vehicle as v; else noVehicle">
-		<div class="car-summary">
-			<img *ngIf="v.imageUrl" [src]="v.imageUrl" [alt]="v.title" />
-			<div>
-				<div class="title">{{ v.title }}</div>
-				<div class="subtitle" *ngIf="v.subtitle">{{ v.subtitle }}</div>
-				<div class="meta">
-					<span *ngIf="v.fuel">{{ v.fuel }}</span>
-					<span *ngIf="v.mileage">{{ v.mileage | number }} km</span>
-					<span *ngIf="v.price">£ {{ v.price | number:'1.0-0' }}</span>
-				</div>
-			</div>
-		</div>
-		<h3>Raw data</h3>
-		<pre>{{ v.raw || v | json }}</pre>
-	</div>
-	<ng-template #noVehicle>
-		<p>Nessun dato veicolo passato. Torna alla pagina Used e riprova.</p>
-	</ng-template>
+  <!-- Main Content -->
+  <div *ngIf="vehicle as v; else noVehicle" class="main-content">
+    
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="vehicle-gallery">
+        <div class="main-image">
+          <img [src]="v.imageUrl || '/assets/image.png'" 
+               [alt]="v.title" 
+               class="vehicle-image" />
+          <div class="image-overlay">
+            <button class="view-all-photos">📷 View All Photos</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="vehicle-overview">
+        <div class="vehicle-header">
+          <h1 class="vehicle-title">{{ v.title }}</h1>
+          <div class="vehicle-subtitle" *ngIf="v.subtitle">{{ v.subtitle }}</div>
+          <div class="price-section">
+            <span class="price" *ngIf="v.price && !v.priceOnApplication">
+              £{{ v.price | number:'1.0-0' }}
+            </span>
+            <span class="price-poa" *ngIf="v.priceOnApplication">
+              Price on Application
+            </span>
+          </div>
+        </div>
+
+        <!-- Key Specs Quick View -->
+        <div class="quick-specs">
+          <div class="spec-item" *ngIf="v.year">
+            <span class="spec-icon">📅</span>
+            <div>
+              <div class="spec-label">Year</div>
+              <div class="spec-value">{{ v.year }}</div>
+            </div>
+          </div>
+          <div class="spec-item" *ngIf="v.mileage">
+            <span class="spec-icon">🚗</span>
+            <div>
+              <div class="spec-label">Mileage</div>
+              <div class="spec-value">{{ v.mileage | number }} km</div>
+            </div>
+          </div>
+          <div class="spec-item" *ngIf="v.fuel">
+            <span class="spec-icon">⛽</span>
+            <div>
+              <div class="spec-label">Fuel Type</div>
+              <div class="spec-value">{{ v.fuel }}</div>
+            </div>
+          </div>
+          <div class="spec-item" *ngIf="v.registration">
+            <span class="spec-icon">🔢</span>
+            <div>
+              <div class="spec-label">Registration</div>
+              <div class="spec-value">{{ v.registration }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="btn-primary">
+            📞 Contact Dealer
+          </button>
+          <button class="btn-secondary">
+            📧 Request Info
+          </button>
+          <button class="btn-outline">
+            🚗 Book Test Drive
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Specifications -->
+    <div class="specifications-section">
+      <h2 class="section-title">Detailed Specifications</h2>
+      <div class="specs-grid">
+        <div class="spec-category">
+          <h3 class="category-title">General Information</h3>
+          <div class="spec-list">
+            <div class="spec-row" *ngIf="v.title">
+              <span class="spec-name">Make & Model</span>
+              <span class="spec-value">{{ v.title }}</span>
+            </div>
+            <div class="spec-row" *ngIf="v.year">
+              <span class="spec-name">Year</span>
+              <span class="spec-value">{{ v.year }}</span>
+            </div>
+            <div class="spec-row" *ngIf="v.registration">
+              <span class="spec-name">Registration</span>
+              <span class="spec-value">{{ v.registration }}</span>
+            </div>
+            <div class="spec-row" *ngIf="v.mileage">
+              <span class="spec-name">Mileage</span>
+              <span class="spec-value">{{ v.mileage | number }} km</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-category">
+          <h3 class="category-title">Engine & Performance</h3>
+          <div class="spec-list">
+            <div class="spec-row" *ngIf="v.fuel">
+              <span class="spec-name">Fuel Type</span>
+              <span class="spec-value">{{ v.fuel }}</span>
+            </div>
+            <div class="spec-row" *ngIf="getEngineSize(v)">
+              <span class="spec-name">Engine Size</span>
+              <span class="spec-value">{{ getEngineSize(v) }}</span>
+            </div>
+            <div class="spec-row" *ngIf="getTransmission(v)">
+              <span class="spec-name">Transmission</span>
+              <span class="spec-value">{{ getTransmission(v) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-category">
+          <h3 class="category-title">Pricing</h3>
+          <div class="spec-list">
+            <div class="spec-row">
+              <span class="spec-name">Asking Price</span>
+              <span class="spec-value price-highlight" *ngIf="v.price && !v.priceOnApplication">
+                £{{ v.price | number:'1.0-0' }}
+              </span>
+              <span class="spec-value" *ngIf="v.priceOnApplication">
+                Price on Application
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="contact-section">
+      <h2 class="section-title">Contact Information</h2>
+      <div class="contact-card">
+        <div class="dealer-info">
+          <h3>AutoTrader Dealer</h3>
+          <p>Professional Car Sales</p>
+          <div class="contact-details">
+            <div class="contact-item">
+              <span class="contact-icon">📞</span>
+              <span>+44 123 456 7890</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">📧</span>
+              <span>sales@autotrader.co.uk</span>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">📍</span>
+              <span>123 Car Street, London, UK</span>
+            </div>
+          </div>
+        </div>
+        <div class="contact-actions">
+          <button class="contact-btn primary">Call Now</button>
+          <button class="contact-btn secondary">Send Message</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- No Vehicle State -->
+  <ng-template #noVehicle>
+    <div class="no-vehicle-state">
+      <div class="error-icon">🚗</div>
+      <h2>Vehicle Not Found</h2>
+      <p>Sorry, we couldn't find the vehicle details you're looking for.</p>
+      <button class="btn-primary" (click)="goBack()">
+        Return to Search Results
+      </button>
+    </div>
+  </ng-template>
+
 </div>

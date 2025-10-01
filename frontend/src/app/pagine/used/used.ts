@@ -6,12 +6,10 @@ import { CommonModule } from '@angular/common';
 // JsonPipe removed because it's no longer used in the template
 import { Filter } from '../../filter/filter';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 
 interface FilterCriteria {
   make?: string;
-  model?: string;
-  bodyTypes: string[];
   priceMin: number;
   priceMax: number;
   yearMin: number;
@@ -19,7 +17,6 @@ interface FilterCriteria {
   mileageMin: number;
   mileageMax: number;
   engineTypes: string[];
-  drivetrains: string[];
 }
 
 @Component({
@@ -38,10 +35,22 @@ export class UsedComponent implements OnInit, OnDestroy {
   public allVehicles: VehicleCard[] = [];
   public filteredVehicles: VehicleCard[] = [];
   public errorBanner: { title: string; detail?: string } | null = null;
+  
+  // Initial filter from query params
+  public initialMake: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private route: ActivatedRoute) {}
 
   ngOnInit() {
+  // Leggi il parametro make dalla query string
+  this.route.queryParams.subscribe(params => {
+    console.log('=== USED PAGE DEBUG ===');
+    console.log('Query params received:', params);
+    this.initialMake = params['make'] || null;
+    console.log('initialMake set to:', this.initialMake);
+    console.log('=====================');
+  });
+
   // TODO: if your backend runs on a different port, update this URL or derive from environment
   this.socket = io('http://localhost:3000');
     this.socket.on('connect', () => {
@@ -68,8 +77,11 @@ export class UsedComponent implements OnInit, OnDestroy {
   }
 
   private fetchInitialVehicles() {
-    // Prefer relative URL if you proxy the backend; otherwise use full URL
+    // SEMPRE carica tutti i veicoli per popolare correttamente le opzioni del filtro
     const url = 'http://localhost:3000/api/vehicles';
+    
+    console.log('Fetching ALL vehicles for filter options:', url);
+    
     this.http.get<any>(url).subscribe({
       next: (res) => {
         // Normalize common API shapes to a flat array
@@ -77,7 +89,15 @@ export class UsedComponent implements OnInit, OnDestroy {
         const arr = this.normalizeArrayResponse(res);
         const cards: VehicleCard[] = (arr || []).map((it: any) => this.toCard(it)).filter(Boolean) as VehicleCard[];
         this.allVehicles = cards;
-        this.filteredVehicles = [...cards];
+        
+        // Se c'è un filtro iniziale, applicalo DOPO aver caricato tutti i veicoli
+        if (this.initialMake && this.initialMake !== 'All') {
+          this.filteredVehicles = cards.filter(car => 
+            car.title.toLowerCase().includes(this.initialMake!.toLowerCase())
+          );
+        } else {
+          this.filteredVehicles = [...cards];
+        }
       },
       error: (err) => {
         console.warn('Errore caricando /api/vehicles:', err);
@@ -126,14 +146,22 @@ export class UsedComponent implements OnInit, OnDestroy {
 
   private toCard(item: any): VehicleCard | null {
     if (!item) return null;
+    
     // Handle different shapes
     const v = item.vehicle || item; // mock returns fields at root
 
     const make = v?.make || v?.manufacturer || v?.brand;
     const model = v?.model || v?.derivative || v?.variant;
     const year = v?.year || v?.yearOfManufacture || v?.registrationYear || this.tryParseYear(v?.firstRegistration || v?.registration);
-    const price = v?.price || v?.priceGBP || v?.retailPrice || v?.price_gbp || v?.askingPrice || v?.salePrice || v?.listPrice;
-    const mileage = v?.mileage || v?.odometer || v?.odometerReading;
+    const price = v?.price || v?.priceGBP || v?.retailPrice || v?.price_gbp || v?.askingPrice || v?.salePrice || v?.listPrice || 
+                  item?.adverts?.forecourtPrice?.amountGBP || 
+                  item?.adverts?.retailAdverts?.suppliedPrice?.amountGBP || 
+                  item?.adverts?.retailAdverts?.totalPrice?.amountGBP ||
+                  item?.adverts?.retailAdverts?.suppliedPrice?.amountGBX;
+    
+    // Controlla se il prezzo è "on application" (su richiesta)
+    const priceOnApplication = item?.adverts?.retailAdverts?.priceOnApplication;
+    const mileage = v?.mileage || v?.odometer || v?.odometerReading || v?.odometerReadingMiles || item?.vehicle?.odometerReadingMiles;
     const fuel = v?.fuel || v?.fuelType;
     const registration = v?.registration || v?.plate || v?.vrm;
     const id = v?.id || item?.id || `${make || 'veh'}-${model || 'model'}-${registration || Math.random().toString(36).slice(2,7)}`;
@@ -149,12 +177,13 @@ export class UsedComponent implements OnInit, OnDestroy {
       id: String(id),
       title,
       subtitle,
-      price: this.toNumber(price),
-      mileage: this.toNumber(mileage),
+      price: priceOnApplication ? null : this.toNumber(price),
+      mileage: this.convertMilesToKm(mileage),
       fuel: fuel || undefined,
       year: this.toNumber(year),
       registration: registration || undefined,
       imageUrl,
+      priceOnApplication: priceOnApplication || false,
       raw: item
     };
   }
@@ -162,6 +191,13 @@ export class UsedComponent implements OnInit, OnDestroy {
   private toNumber(x: any): number | undefined {
     const n = typeof x === 'string' ? Number(x.replace(/[^0-9.]/g, '')) : Number(x);
     return Number.isFinite(n) ? n : undefined;
+  }
+
+  private convertMilesToKm(miles: any): number | undefined {
+    const milesNum = this.toNumber(miles);
+    if (milesNum === undefined) return undefined;
+    // Conversione da miglia a chilometri (1 miglio = 1.60934 km)
+    return Math.round(milesNum * 1.60934);
   }
 
   private tryParseYear(x: any): number | undefined {
@@ -180,13 +216,15 @@ export class UsedComponent implements OnInit, OnDestroy {
   private getImageUrl(obj: any): string | undefined {
     if (!obj) return undefined;
     
-    // Prova prima i campi diretti più comuni
+    // Prova prima i campi diretti più comuni + campi AutoTrader specifici
     const direct = this.firstNonEmpty(
       obj.imageUrl, obj.imageURL, obj.image, obj.thumbnailUrl, obj.thumbnail,
       obj.mainImageUrl, obj.primaryImage, obj.photo, obj.photoUrl,
-      // AutoTrader Stock API potrebbe usare questi campi
+      // AutoTrader Stock API campi specifici
       obj.images?.[0]?.url, obj.images?.[0]?.href, obj.images?.[0]?.link,
-      obj.media?.image, obj.media?.photo, obj.vehicle?.image
+      obj.media?.image, obj.media?.photo, obj.vehicle?.image,
+      // Altri campi potenziali AutoTrader
+      obj.mainImage, obj.primaryImageUrl, obj.stockImage, obj.featuredImage
     );
     if (direct) return String(direct);
 
@@ -197,7 +235,7 @@ export class UsedComponent implements OnInit, OnDestroy {
       obj.imageUrls, obj.photoUrls, obj.gallery
     ].filter(Array.isArray);
     
-    for (const arr of arrs) {
+  for (const arr of arrs) {
       if (!arr || !arr.length) continue;
       for (const item of arr) {
         const candidate = this.firstNonEmpty(
@@ -238,14 +276,6 @@ export class UsedComponent implements OnInit, OnDestroy {
         return false;
       }
 
-      // Filter by body types
-      if (criteria.bodyTypes.length > 0) {
-        const vehicleBodyType = vehicle.raw?.bodyType?.toLowerCase() || vehicle.raw?.category?.toLowerCase() || '';
-        if (!criteria.bodyTypes.some(type => vehicleBodyType.includes(type.toLowerCase()))) {
-          return false;
-        }
-      }
-
       // Filter by price
       if (vehicle.price) {
         if (vehicle.price < criteria.priceMin || vehicle.price > criteria.priceMax) {
@@ -275,14 +305,6 @@ export class UsedComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Filter by drivetrains
-      if (criteria.drivetrains.length > 0) {
-        const vehicleDrivetrain = vehicle.raw?.drivetrain?.toLowerCase() || '';
-        if (!criteria.drivetrains.some(drive => vehicleDrivetrain.includes(drive.toLowerCase()))) {
-          return false;
-        }
-      }
-
       return true;
     });
   }
@@ -292,11 +314,12 @@ interface VehicleCard {
   id: string;
   title: string;
   subtitle?: string;
-  price?: number;
+  price?: number | null;
   mileage?: number;
   fuel?: string;
   year?: number;
   registration?: string;
   imageUrl?: string;
+  priceOnApplication?: boolean;
   raw?: any;
 }

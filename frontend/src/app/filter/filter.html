@@ -27,32 +27,59 @@
     
     <div>
         <h2>Price Range</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="range" [min]="priceMin" [max]="priceMax" [(ngModel)]="priceMin" class="slider" (input)="onFilterChange()" />
-            <span>-</span>
-            <input type="range" [min]="priceMin" [max]="priceMax" [(ngModel)]="priceMax" class="slider" (input)="onFilterChange()" />
+        <div class="range-container">
+            <input type="range" 
+                   [min]="priceMin" 
+                   [max]="priceMax" 
+                   [(ngModel)]="currentPriceMin" 
+                   class="range-slider range-min" 
+                   (input)="onPriceRangeChange()" />
+            <input type="range" 
+                   [min]="priceMin" 
+                   [max]="priceMax" 
+                   [(ngModel)]="currentPriceMax" 
+                   class="range-slider range-max" 
+                   (input)="onPriceRangeChange()" />
         </div>
-        <div style="color: #888;">£{{ priceMin | number:'1.0-0' }} - £{{ priceMax | number:'1.0-0' }}</div>
+        <div class="range-values">£{{ currentPriceMin | number:'1.0-0' }} - £{{ currentPriceMax | number:'1.0-0' }}</div>
     </div>
 
     <div>
         <h2>Year Range</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="range" [min]="yearMin" [max]="yearMax" [(ngModel)]="yearMin" class="slider" (input)="onFilterChange()" />
-            <span>-</span>
-            <input type="range" [min]="yearMin" [max]="yearMax" [(ngModel)]="yearMax" class="slider" (input)="onFilterChange()" />
+        <div class="range-container">
+            <input type="range" 
+                   [min]="yearMin" 
+                   [max]="yearMax" 
+                   [(ngModel)]="currentYearMin" 
+                   class="range-slider range-min" 
+                   (input)="onYearRangeChange()" />
+            <input type="range" 
+                   [min]="yearMin" 
+                   [max]="yearMax" 
+                   [(ngModel)]="currentYearMax" 
+                   class="range-slider range-max" 
+                   (input)="onYearRangeChange()" />
         </div>
-        <div style="color: #888;">{{ yearMin }} - {{ yearMax }}</div>
+        <div class="range-values">{{ currentYearMin }} - {{ currentYearMax }}</div>
     </div>
 
     <div>
         <h2>Mileage Range</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="range" [min]="mileageMin" [max]="mileageMax" [(ngModel)]="mileageMin" class="slider" (input)="onFilterChange()" />
-            <span>-</span>
-            <input type="range" [min]="mileageMin" [max]="mileageMax" [(ngModel)]="mileageMax" class="slider" (input)="onFilterChange()" />
+        <div class="range-container">
+            <input type="range" 
+                   [min]="mileageMin" 
+                   [max]="mileageMax" 
+                   [(ngModel)]="currentMileageMin" 
+                   class="range-slider range-min" 
+                   (input)="onMileageRangeChange()" />
+            <input type="range" 
+                   [min]="mileageMin" 
+                   [max]="mileageMax" 
+                   [(ngModel)]="currentMileageMax" 
+                   class="range-slider range-max" 
+                   (input)="onMileageRangeChange()" />
         </div>
-        <div style="color: #888;">{{ mileageMin | number }} - {{ mileageMax | number }} km</div>
+        <div class="range-values">{{ currentMileageMin | number }} - {{ currentMileageMax | number }} km</div>
     </div>
     
     <div>

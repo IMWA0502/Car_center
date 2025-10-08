@@ -1,0 +1,107 @@
+<div class="api-container">
+  <div class="header">
+    <h1>🚗 Car Center - Visualizzatore Dati API</h1>
+    <p>Tutti i dati dell'API Autotrader in tempo reale</p>
+  </div>
+
+  <div class="controls">
+    <button (click)="refreshData()" class="refresh-btn" [disabled]="loading">
+      🔄 {{ loading ? 'Caricamento...' : 'Aggiorna Dati' }}
+    </button>
+    <button (click)="exportToJson()" class="export-btn" [disabled]="!apiData">
+      📥 Esporta JSON
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Caricamento dati API in corso...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <h3>❌ Errore</h3>
+    <p>{{ error }}</p>
+    <button (click)="refreshData()" class="retry-btn">🔄 Riprova</button>
+  </div>
+
+  <!-- Data Display -->
+  <div *ngIf="!loading && !error && apiData" class="data-display">
+    
+    <!-- Statistics -->
+    <div class="stats-section">
+      <h3>📊 Statistiche</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Sandbox ID:</span>
+          <span class="stat-value">{{ apiData.sandboxId || 'N/A' }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Totale Veicoli:</span>
+          <span class="stat-value">{{ apiData.vehicles?.length || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Ultimo Aggiornamento:</span>
+          <span class="stat-value">{{ lastUpdate | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Endpoint:</span>
+          <span class="stat-value">{{ apiData.source || 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw API Response -->
+    <div class="json-section">
+      <h3>🔍 Risposta API Completa</h3>
+      <div class="json-container">
+        <pre>{{ apiData | json }}</pre>
+      </div>
+    </div>
+
+    <!-- Vehicles List -->
+    <div *ngIf="apiData.vehicles && apiData.vehicles.length > 0" class="vehicles-section">
+      <h3>🚙 Lista Veicoli ({{ apiData.vehicles.length }} trovati)</h3>
+      
+      <div *ngFor="let vehicle of apiData.vehicles; let i = index" class="vehicle-card">
+        <div class="vehicle-header">
+          <h4>Veicolo #{{ i + 1 }}</h4>
+          <div class="vehicle-title">
+            {{ vehicle?.vehicle?.make || vehicle?.make || 'N/A' }} 
+            {{ vehicle?.vehicle?.model || vehicle?.model || 'N/A' }}
+          </div>
+        </div>
+        
+        <div class="vehicle-details">
+          <div class="detail-row" *ngIf="vehicle?.vehicle?.year || vehicle?.year">
+            <span class="detail-label">Anno:</span>
+            <span class="detail-value">{{ vehicle?.vehicle?.year || vehicle?.year }}</span>
+          </div>
+          <div class="detail-row" *ngIf="vehicle?.vehicle?.price || vehicle?.price">
+            <span class="detail-label">Prezzo:</span>
+            <span class="detail-value">£{{ vehicle?.vehicle?.price || vehicle?.price | number }}</span>
+          </div>
+          <div class="detail-row" *ngIf="vehicle?.vehicle?.mileage || vehicle?.mileage">
+            <span class="detail-label">Chilometraggio:</span>
+            <span class="detail-value">{{ vehicle?.vehicle?.mileage || vehicle?.mileage | number }} miglia</span>
+          </div>
+        </div>
+
+        <div class="vehicle-json">
+          <h5>📋 Dati Completi JSON</h5>
+          <div class="json-container small">
+            <pre>{{ vehicle | json }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Vehicles Found -->
+    <div *ngIf="!apiData.vehicles || apiData.vehicles.length === 0" class="no-data">
+      <h3>⚠️ Nessun veicolo trovato</h3>
+      <p>La risposta API non contiene veicoli o la struttura è diversa da quella attesa.</p>
+    </div>
+
+  </div>
+</div>

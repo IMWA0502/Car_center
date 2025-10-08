@@ -93,7 +93,6 @@ app.get('/api/vehicles', async (req, res) => {
     }
 
     // --- CHIAMATA DATI: RICHIESTA STOCK API ---
-    // Risposta AutoTrader: "You would use the Stock API to pull back the Stock that would be listed on the respected Advertiser ID"
     // Per dealer websites si usa Stock API, non Vehicles API
     const templateFromEnv = process.env.AUTOTRADER_STOCK_ENDPOINT || '';
     const pageSize = process.env.AUTOTRADER_PAGE_SIZE || '50';
@@ -152,7 +151,7 @@ app.get('/api/vehicles', async (req, res) => {
         console.warn(`Tentativo errore: ${url} ->`, e);
       }
     }
-
+      // Se nessun endpoint ha risposto con successo, gestisci l'errore
     if (!success) {
       // Se tutti o parte dei tentativi restituiscono 403 con messaggio esplicito,
       // ritorna un 403 strutturato per mostrare un errore chiaro al frontend
@@ -176,6 +175,8 @@ app.get('/api/vehicles', async (req, res) => {
       });
     }
 
+    // --- ELABORAZIONE RISPOSTA E FILTRI ---
+    // Leggi i dati JSON dalla risposta dell'endpoint funzionante
     const data = await success.resp.json();
     console.log('Risultato GET /api/vehicles (Stock API) da:', success.url);
     
@@ -193,6 +194,7 @@ app.get('/api/vehicles', async (req, res) => {
     // Applica filtri ai veicoli se specificati nei parametri query
     let vehicles = data;
     
+  
     // Se la risposta contiene un array di veicoli, filtralo
     if (Array.isArray(data)) {
       vehicles = data;
@@ -206,6 +208,8 @@ app.get('/api/vehicles', async (req, res) => {
       vehicles = data.stock;
     }
     
+    //sistema il filtro per marca (make)
+  
     if (Array.isArray(vehicles) && make) {
       console.log('=== BACKEND FILTER DEBUG ===');
       console.log('Filtering for make:', make);
@@ -279,14 +283,237 @@ app.get('/api/autotrader-auth-info', async (req, res) => {
   }
 });
 
-// Endpoint webhook per notifiche da Autotrader
-app.put('/webhook/autotrader', express.json({ type: '*/*' }), (req, res) => {
-  console.log('Webhook ricevuto da Autotrader:', req.body);
-  io.emit('autotrader-update', req.body);
-  res.status(200).send('Webhook ricevuto');
+//inizio
+//serve a me per visualizzare tutti i dati dell'API in formato HTML nel browser
+
+// Endpoint per visualizzare tutti i dati dell'API in formato HTML nel browser
+app.get('/api', async (req, res) => {
+  try {
+    // Ottieni tutti i dati dei veicoli
+    const key = process.env.AUTOTRADER_KEY;
+    const secret = process.env.AUTOTRADER_SECRET;
+    const sandboxId = process.env.AUTOTRADER_SANDBOX_ID;
+
+    if (!key || !secret) {
+      return res.send(`
+        <html>
+          <head><title>API Data - Car Center</title></head>
+          <body>
+            <h1>🚗 Car Center - API Data</h1>
+            <div style="color: red;">
+              <h2>❌ Configurazione mancante</h2>
+              <p>Imposta AUTOTRADER_KEY e AUTOTRADER_SECRET nel file .env</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+
+    // Autenticazione
+    const authResponse = await fetchWithTimeout('https://api-sandbox.autotrader.co.uk/authenticate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ key, secret })
+    });
+
+    if (!authResponse.ok) {
+      return res.send(`
+        <html>
+          <head><title>API Data - Car Center</title></head>
+          <body>
+            <h1>🚗 Car Center - API Data</h1>
+            <div style="color: red;">
+              <h2>❌ Errore di autenticazione</h2>
+              <p>Impossibile autenticarsi con l'API Autotrader</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+
+    const authData = await authResponse.json();
+    const token = authData.access_token;
+
+    // Ottieni i dati dei veicoli
+    const stockResponse = await fetchWithTimeout(`https://api-sandbox.autotrader.co.uk/stock?advertiser_id=${sandboxId}&page=1&page_size=100`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    let vehiclesData = {};
+    let vehicles = [];
+    
+    if (stockResponse.ok) {
+      vehiclesData = await stockResponse.json();
+      
+      // Estrai i veicoli dalla risposta
+      if (Array.isArray(vehiclesData)) {
+        vehicles = vehiclesData;
+      } else if (vehiclesData && vehiclesData.vehicles && Array.isArray(vehiclesData.vehicles)) {
+        vehicles = vehiclesData.vehicles;
+      } else if (vehiclesData && vehiclesData.data && Array.isArray(vehiclesData.data)) {
+        vehicles = vehiclesData.data;
+      } else if (vehiclesData && Array.isArray(vehiclesData.stock)) {
+        vehicles = vehiclesData.stock;
+      }
+    }
+
+    // Genera HTML per visualizzare i dati
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>API Data - Car Center</title>
+        <meta charset="UTF-8">
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5; 
+          }
+          .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+          }
+          .header { 
+            text-align: center; 
+            color: #333; 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+          }
+          .stats { 
+            background: #e7f3ff; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
+          }
+          .vehicle-card { 
+            border: 1px solid #ddd; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            background: #fafafa; 
+          }
+          .vehicle-title { 
+            color: #007bff; 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+          }
+          .data-section { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 3px; 
+            border-left: 4px solid #007bff; 
+          }
+          pre { 
+            background: #2d3748; 
+            color: #e2e8f0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            overflow-x: auto; 
+            font-size: 12px; 
+          }
+          .refresh-btn { 
+            background: #007bff; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 10px 0; 
+          }
+          .refresh-btn:hover { 
+            background: #0056b3; 
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🚗 Car Center - Tutti i Dati API</h1>
+            <p>Visualizzazione completa dei dati Autotrader</p>
+          </div>
+          
+          <button class="refresh-btn" onclick="window.location.reload()">🔄 Aggiorna Dati</button>
+          
+          <div class="stats">
+            <h3>📊 Statistiche</h3>
+            <p><strong>Sandbox ID:</strong> ${sandboxId}</p>
+            <p><strong>Numero totale veicoli:</strong> ${vehicles.length}</p>
+            <p><strong>Data/Ora aggiornamento:</strong> ${new Date().toLocaleString('it-IT')}</p>
+            <p><strong>Endpoint utilizzato:</strong> Stock API</p>
+          </div>
+
+          <div class="data-section">
+            <h3>🔍 Struttura Completa Risposta API</h3>
+            <pre>${JSON.stringify(vehiclesData, null, 2)}</pre>
+          </div>
+
+          ${vehicles.length > 0 ? `
+            <h3>🚙 Lista Veicoli (${vehicles.length} trovati)</h3>
+            ${vehicles.map((vehicle, index) => `
+              <div class="vehicle-card">
+                <div class="vehicle-title">
+                  Veicolo #${index + 1}: ${vehicle?.vehicle?.make || vehicle?.make || 'N/A'} ${vehicle?.vehicle?.model || vehicle?.model || 'N/A'}
+                </div>
+                <div class="data-section">
+                  <h4>📋 Dati Completi Veicolo</h4>
+                  <pre>${JSON.stringify(vehicle, null, 2)}</pre>
+                </div>
+              </div>
+            `).join('')}
+          ` : `
+            <div class="data-section">
+              <h3>⚠️ Nessun veicolo trovato</h3>
+              <p>La risposta API non contiene veicoli o la struttura è diversa da quella attesa.</p>
+            </div>
+          `}
+
+          <div class="data-section">
+            <h3>🔗 Altri Endpoint Disponibili</h3>
+            <ul>
+              <li><a href="/api/vehicles">/api/vehicles</a> - JSON dei veicoli</li>
+              <li><a href="/api/autotrader-id">/api/autotrader-id</a> - ID Sandbox</li>
+              <li><a href="/api/autotrader-auth-info">/api/autotrader-auth-info</a> - Info autenticazione</li>
+            </ul>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+
+  } catch (error) {
+    res.send(`
+      <html>
+        <head><title>API Data - Car Center</title></head>
+        <body>
+          <h1>🚗 Car Center - API Data</h1>
+          <div style="color: red;">
+            <h2>❌ Errore</h2>
+            <p>Errore nel recupero dei dati: ${error.message}</p>
+            <pre>${error.stack}</pre>
+          </div>
+        </body>
+      </html>
+    `);
+  }
 });
+//fine
 
 // Avvia il server su una porta custom (esempio 3000)
 server.listen(PORT, () => {
   console.log(`Backend in ascolto su http://localhost:${PORT}`);
+  // Mostra l'URL per visualizzare i dati API
+  console.log(`📊 Visualizza tutti i dati API su: http://localhost:${PORT}/api`);
 });
